@@ -2,38 +2,168 @@ import gleam/dict.{type Dict}
 import gleam/dynamic
 import gleam/http
 import gleam/int
+import gleam/io
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result.{try}
 import gleam/string
 
+fn default_field(key, decoder, default) {
+  optional_field(key, decoder)
+  |> with_default(default)
+}
+
+fn optional_field(key, decoder) {
+  fn(raw) {
+    let decoder = dynamic.optional_field(key, dynamic.optional(decoder))
+    use decoded <- try(decoder(raw))
+    case decoded {
+      Some(Some(value)) -> Some(value)
+      _ -> None
+    }
+    |> Ok
+  }
+}
+
+fn with_default(decoder, value) {
+  fn(raw) {
+    use decoded <- try(decoder(raw))
+    Ok(option.unwrap(decoded, value))
+  }
+}
+
 /// This is the root object of the OpenAPI document.
 pub type Document {
   Document(
-    version: String,
+    openapi: String,
     info: Info,
+    json_schema_dialect: Option(String),
+    servers: List(Server),
     paths: Dict(String, PathItem),
+    // webhooks:
     components: Components,
+    // security:
+    // tags:
+    // externalDocs:
   )
 }
 
 pub fn decoder(top) {
-  dynamic.decode4(
+  dynamic.decode6(
     Document,
     dynamic.field("openapi", dynamic.string),
     dynamic.field("info", info_decoder),
-    dynamic.field("paths", paths_decoder(_, top)),
-    dynamic.field("components", components_decoder(_, top)),
+    optional_field("jsonSchemaDialect", dynamic.string),
+    default_field("servers", dynamic.list(server_decoder), []),
+    default_field("paths", paths_decoder, dict.new()),
+    default_field(
+      "components",
+      components_decoder,
+      Components(dict.new(), dict.new(), dict.new(), dict.new()),
+    ),
   )(top)
+}
+
+pub type Ref(t) {
+  Ref(ref: String)
+  Inline(value: t)
+}
+
+fn ref_decoder(of: dynamic.Decoder(t)) -> dynamic.Decoder(Ref(t)) {
+  dynamic.any([
+    dynamic.decode1(Ref, dynamic.field("$ref", dynamic.string)),
+    dynamic.decode1(Inline, of),
+  ])
 }
 
 /// The object provides metadata about the API. The metadata MAY be used by the clients if needed, and MAY be presented in editing or documentation generation tools for convenience.
 pub type Info {
-  Info(version: String)
+  Info(
+    title: String,
+    summary: Option(String),
+    description: Option(String),
+    terms_of_service: Option(String),
+    contact: Option(Contact),
+    license: Option(Licence),
+    version: String,
+  )
 }
 
 fn info_decoder(raw) {
-  dynamic.decode1(Info, dynamic.field("version", dynamic.string))(raw)
+  dynamic.decode7(
+    Info,
+    dynamic.field("title", dynamic.string),
+    optional_field("summary", dynamic.string),
+    optional_field("description", dynamic.string),
+    optional_field("termsOfService", dynamic.string),
+    optional_field("contact", contact_decoder),
+    optional_field("license", license_decoder),
+    dynamic.field("version", dynamic.string),
+  )(raw)
+}
+
+pub type Contact {
+  Contact(name: Option(String), url: Option(String), email: Option(String))
+}
+
+fn contact_decoder(raw) {
+  dynamic.decode3(
+    Contact,
+    optional_field("name", dynamic.string),
+    optional_field("url", dynamic.string),
+    optional_field("email", dynamic.string),
+  )(raw)
+}
+
+pub type Licence {
+  Licence(name: String, identifier: Option(String), url: Option(String))
+}
+
+fn license_decoder(raw) {
+  dynamic.decode3(
+    Licence,
+    dynamic.field("name", dynamic.string),
+    optional_field("identifier", dynamic.string),
+    optional_field("url", dynamic.string),
+  )(raw)
+}
+
+pub type Server {
+  Server(
+    url: String,
+    description: Option(String),
+    variables: Dict(String, ServerVariable),
+  )
+}
+
+fn server_decoder(raw) {
+  dynamic.decode3(
+    Server,
+    dynamic.field("url", dynamic.string),
+    optional_field("description", dynamic.string),
+    default_field(
+      "variables",
+      dynamic.dict(dynamic.string, server_variable_decoder),
+      dict.new(),
+    ),
+  )(raw)
+}
+
+pub type ServerVariable {
+  ServerVariable(
+    enum: List(String),
+    default: String,
+    description: Option(String),
+  )
+}
+
+fn server_variable_decoder(raw) {
+  dynamic.decode3(
+    ServerVariable,
+    dynamic.field("enum", dynamic.list(dynamic.string)),
+    dynamic.field("default", dynamic.string),
+    optional_field("description", dynamic.string),
+  )(raw)
 }
 
 /// Describes the operations available on a single path. 
@@ -41,66 +171,87 @@ pub type PathItem {
   PathItem(
     summary: Option(String),
     description: Option(String),
-    parameters: List(Parameter),
+    parameters: List(Ref(Parameter)),
     operations: List(#(http.Method, Operation)),
   )
 }
 
-fn paths_decoder(raw, top) {
-  dynamic.dict(dynamic.string, path_decoder(_, top))(raw)
+fn paths_decoder(raw) {
+  dynamic.dict(dynamic.string, path_decoder)(raw)
 }
 
-fn path_decoder(raw, top) {
-  use maybe_parameters <- try(dynamic.optional_field(
-    "parameters",
-    dynamic.list(parameter_decoder(_, top)),
-  )(raw))
-  let parameters = option.unwrap(maybe_parameters, [])
-  use maybe_operations <- try(
-    [
-      #("get", http.Get),
-      #("put", http.Put),
-      #("post", http.Post),
-      #("delete", http.Delete),
-      #("options", http.Options),
-      #("head", http.Head),
-      #("patch", http.Patch),
-      #("trace", http.Trace),
-    ]
-    |> list.map(fn(lookup) {
-      let #(key, method) = lookup
-      use maybe <- try(dynamic.optional_field(key, operation_decoder(_, top))(
-        raw,
-      ))
-      Ok(#(method, maybe))
-    })
-    |> result.all(),
-  )
-  let operations =
-    list.filter_map(maybe_operations, fn(maybe) {
-      let #(method, maybe) = maybe
-      case maybe {
-        option.Some(value) -> Ok(#(method, value))
-        option.None -> Error(Nil)
-      }
-    })
-  use summary <- try(dynamic.optional_field("summary", dynamic.string)(raw))
-  use description <- try(dynamic.optional_field("description", dynamic.string)(
-    raw,
-  ))
-  Ok(PathItem(summary, description, parameters, operations))
+fn path_decoder(raw) {
+  dynamic.decode4(
+    PathItem,
+    optional_field("summary", dynamic.string),
+    optional_field("description", dynamic.string),
+    default_field(
+      "parameters",
+      dynamic.list(ref_decoder(parameter_decoder)),
+      [],
+    ),
+    fn(raw) {
+      use maybe_operations <- try(
+        [
+          #("get", http.Get),
+          #("put", http.Put),
+          #("post", http.Post),
+          #("delete", http.Delete),
+          #("options", http.Options),
+          #("head", http.Head),
+          #("patch", http.Patch),
+          #("trace", http.Trace),
+        ]
+        |> list.map(fn(lookup) {
+          let #(key, method) = lookup
+          use maybe <- try(dynamic.optional_field(key, operation_decoder)(raw))
+          Ok(#(method, maybe))
+        })
+        |> result.all(),
+      )
+      list.filter_map(maybe_operations, fn(maybe) {
+        let #(method, maybe) = maybe
+        case maybe {
+          option.Some(value) -> Ok(#(method, value))
+          option.None -> Error(Nil)
+        }
+      })
+      |> Ok
+    },
+  )(raw)
 }
 
 pub type Components {
-  Components(schemas: Dict(String, Schema))
+  Components(
+    schemas: Dict(String, Schema),
+    responses: Dict(String, Ref(Response)),
+    parameters: Dict(String, Ref(Parameter)),
+    request_bodies: Dict(String, Ref(RequestBody)),
+  )
 }
 
-fn components_decoder(raw, top) {
-  dynamic.decode1(
+fn components_decoder(raw) {
+  dynamic.decode4(
     Components,
-    dynamic.field(
+    default_field(
       "schemas",
-      dynamic.dict(dynamic.string, schema_decoder(_, top)),
+      dynamic.dict(dynamic.string, schema_decoder),
+      dict.new(),
+    ),
+    default_field(
+      "responses",
+      dynamic.dict(dynamic.string, ref_decoder(response_decoder)),
+      dict.new(),
+    ),
+    default_field(
+      "parameters",
+      dynamic.dict(dynamic.string, ref_decoder(parameter_decoder)),
+      dict.new(),
+    ),
+    default_field(
+      "requestBodies",
+      dynamic.dict(dynamic.string, ref_decoder(request_body_decoder)),
+      dict.new(),
     ),
   )(raw)
 }
@@ -127,8 +278,7 @@ pub type Parameter {
   )
 }
 
-fn parameter_decoder(raw, top) {
-  use content <- try(follow_if_ref(raw, top))
+fn parameter_decoder(raw) {
   dynamic.any([
     dynamic.field("in", fn(field) {
       use in <- try(dynamic.string(field))
@@ -140,8 +290,8 @@ fn parameter_decoder(raw, top) {
             dynamic.optional_field("description", dynamic.string),
             dynamic.optional_field("required", dynamic.bool)
               |> with_default(False),
-            dynamic.field("schema", schema_decoder(_, top)),
-          )(content)
+            dynamic.field("schema", schema_decoder),
+          )(raw)
         }
         "header" -> {
           dynamic.decode4(
@@ -150,15 +300,15 @@ fn parameter_decoder(raw, top) {
             dynamic.optional_field("description", dynamic.string),
             dynamic.optional_field("required", dynamic.bool)
               |> with_default(False),
-            dynamic.field("schema", schema_decoder(_, top)),
-          )(content)
+            dynamic.field("schema", schema_decoder),
+          )(raw)
         }
         "path" ->
           dynamic.decode2(
             PathParameter,
             dynamic.field("name", dynamic.string),
-            dynamic.field("schema", schema_decoder(_, top)),
-          )(content)
+            dynamic.field("schema", schema_decoder),
+          )(raw)
 
         "cookie" ->
           dynamic.decode4(
@@ -167,12 +317,12 @@ fn parameter_decoder(raw, top) {
             dynamic.optional_field("description", dynamic.string),
             dynamic.optional_field("required", dynamic.bool)
               |> with_default(False),
-            dynamic.field("schema", schema_decoder(_, top)),
-          )(content)
+            dynamic.field("schema", schema_decoder),
+          )(raw)
         _ -> Error([dynamic.DecodeError("valid in field", in, [])])
       }
     }),
-  ])(content)
+  ])(raw)
 }
 
 pub type Operation {
@@ -181,31 +331,28 @@ pub type Operation {
     summary: Option(String),
     description: Option(String),
     operation_id: String,
-    parameters: List(Parameter),
-    request_body: Option(RequestBody),
-    responses: Dict(Status, Response),
+    parameters: List(Ref(Parameter)),
+    request_body: Option(Ref(RequestBody)),
+    responses: Dict(Status, Ref(Response)),
   )
 }
 
-fn operation_decoder(raw, top) {
+fn operation_decoder(raw) {
   dynamic.decode7(
     Operation,
-    dynamic.field("tags", dynamic.list(dynamic.string)),
-    dynamic.optional_field("summary", dynamic.string),
-    dynamic.optional_field("description", dynamic.string),
+    default_field("tags", dynamic.list(dynamic.string), []),
+    optional_field("summary", dynamic.string),
+    optional_field("description", dynamic.string),
     dynamic.field("operationId", dynamic.string),
-    fn(raw) {
-      use maybe_parameters <- try(dynamic.optional_field(
-        "parameters",
-        dynamic.list(parameter_decoder(_, top)),
-      )(raw))
-      let parameters = option.unwrap(maybe_parameters, [])
-      Ok(parameters)
-    },
-    dynamic.optional_field("requestBody", request_body_decoder(_, top)),
+    default_field(
+      "parameters",
+      dynamic.list(ref_decoder(parameter_decoder)),
+      [],
+    ),
+    optional_field("requestBody", ref_decoder(request_body_decoder)),
     dynamic.field(
       "responses",
-      dynamic.dict(status_decoder, response_decoder(_, top)),
+      dynamic.dict(status_decoder, ref_decoder(response_decoder)),
     ),
   )(raw)
 }
@@ -218,19 +365,18 @@ pub type RequestBody {
   )
 }
 
-fn request_body_decoder(raw, top) {
-  use content <- try(follow_if_ref(raw, top))
+fn request_body_decoder(raw) {
   dynamic.decode3(
     RequestBody,
     dynamic.optional_field("description", dynamic.string),
-    dynamic.field("content", content_decoder(_, top)),
+    dynamic.field("content", content_decoder),
     dynamic.optional_field("required", dynamic.bool)
       |> with_default(False),
-  )(content)
+  )(raw)
 }
 
-fn content_decoder(raw, top) {
-  dynamic.dict(dynamic.string, media_type_decoder(_, top))(raw)
+fn content_decoder(raw) {
+  dynamic.dict(dynamic.string, media_type_decoder)(raw)
 }
 
 pub type Status {
@@ -252,51 +398,48 @@ fn status_decoder(raw) {
 
 pub type Response {
   Response(
-    description: String,
+    description: Option(String),
     headers: Dict(String, Header),
-    content: Option(Dict(String, MediaType)),
+    content: Dict(String, MediaType),
   )
 }
 
-fn response_decoder(raw, top) {
-  use content <- try(follow_if_ref(raw, top))
+fn response_decoder(raw) {
   dynamic.decode3(
     Response,
-    dynamic.field("description", dynamic.string),
-    fn(raw) {
-      use headers <- try(dynamic.optional_field(
-        "headers",
-        dynamic.dict(dynamic.string, decode_header(_, top)),
-      )(raw))
-      Ok(option.unwrap(headers, dict.new()))
-    },
-    dynamic.optional_field("content", content_decoder(_, top)),
-  )(content)
+    optional_field("description", dynamic.string),
+    default_field(
+      "headers",
+      dynamic.dict(dynamic.string, decode_header),
+      dict.new(),
+    ),
+    default_field("content", content_decoder, dict.new()),
+  )(raw)
 }
 
 pub type Header {
   Header(description: Option(String), required: Bool, schema: Schema)
 }
 
-fn decode_header(raw, top) {
-  use content <- try(follow_if_ref(raw, top))
+fn decode_header(raw) {
   dynamic.decode3(
     Header,
     dynamic.optional_field("description", dynamic.string),
     dynamic.optional_field("required", dynamic.bool)
       |> with_default(False),
-    dynamic.field("schema", schema_decoder(_, top)),
-  )(content)
+    dynamic.field("schema", schema_decoder),
+  )(raw)
 }
 
 pub type MediaType {
-  MediaType(schema: Schema)
+  MediaType(schema: Ref(Schema))
 }
 
-fn media_type_decoder(raw, top) {
-  dynamic.decode1(MediaType, dynamic.field("schema", schema_decoder(_, top)))(
-    raw,
-  )
+fn media_type_decoder(raw) {
+  dynamic.decode1(
+    MediaType,
+    dynamic.field("schema", ref_decoder(schema_decoder)),
+  )(raw)
 }
 
 pub type Schema {
@@ -304,12 +447,12 @@ pub type Schema {
   Integer
   Number
   String
-  Array(Schema)
-  Object(properties: Dict(String, Schema))
+  Array(Ref(Schema))
+  Object(properties: Dict(String, Ref(Schema)))
+  AllOf(List(Ref(Dict(String, Ref(Schema)))))
 }
 
-fn schema_decoder(raw, top) {
-  use content <- try(follow_if_ref(raw, top))
+fn schema_decoder(raw) {
   dynamic.any([
     dynamic.field("type", fn(field) {
       use type_ <- try(dynamic.string(field))
@@ -319,64 +462,136 @@ fn schema_decoder(raw, top) {
         "number" -> Ok(Number)
         "string" -> Ok(String)
         "array" -> {
-          use items <- try(dynamic.field("items", schema_decoder(_, top))(
-            content,
+          use items <- try(dynamic.field("items", ref_decoder(schema_decoder))(
+            raw,
           ))
           Ok(Array(items))
         }
-        "object" -> decode_object(content, top)
-        _ -> Error([dynamic.DecodeError("json type", type_, [])])
-      }
-    }),
-    dynamic.field("allOf", fn(raw) {
-      use elements <- try(
-        dynamic.list(fn(raw) {
-          use content <- try(follow_if_ref(raw, top))
-          decode_properties(content, top)
-        })(raw),
-      )
-
-      let assert Ok(properties) = list.reduce(elements, dict.merge)
-      Ok(Object(properties))
-    }),
-  ])(content)
-}
-
-fn decode_object(raw, top) {
-  dynamic.decode1(Object, decode_properties(_, top))(raw)
-}
-
-fn decode_properties(raw, top) {
-  use properties <- try(dynamic.optional_field(
-    "properties",
-    dynamic.dict(dynamic.string, schema_decoder(_, top)),
-  )(raw))
-  Ok(option.unwrap(properties, dict.new()))
-}
-
-fn follow_path(path, top) {
-  list.try_fold(path, top, fn(spec, item) { dynamic.field(item, Ok)(spec) })
-}
-
-fn follow_if_ref(raw, top) {
-  case dynamic.field("$ref", dynamic.string)(raw) {
-    Ok(ref) -> {
-      let path = string.split(ref, "/")
-      case path {
-        ["#", ..path] -> {
-          let assert Ok(spec) = follow_path(path, top)
-          Ok(spec)
+        "object" -> decode_object(raw)
+        _ -> {
+          Error([dynamic.DecodeError("json type", type_, [])])
         }
-        _ -> Error([dynamic.DecodeError("local ref path", ref, [])])
       }
+    }),
+    dynamic.field(
+      "allOf",
+      dynamic.decode1(AllOf, dynamic.list(ref_decoder(decode_properties))),
+    ),
+  ])(raw)
+}
+
+fn decode_object(raw) {
+  dynamic.decode1(Object, decode_properties)(raw)
+}
+
+fn decode_properties(raw) {
+  default_field(
+    "properties",
+    dynamic.dict(dynamic.string, ref_decoder(schema_decoder)),
+    dict.new(),
+  )(raw)
+}
+
+// --------------------------------------------------------------------
+// UTILS
+
+pub type Segment {
+  FixedSegment(content: String)
+  MatchSegment(name: String, schema: Schema)
+}
+
+fn get_parameter(parameters, key) {
+  list.find(parameters, fn(p) {
+    case p {
+      PathParameter(name: name, ..) if name == key -> True
+      _ -> False
     }
-    Error(_) -> Ok(raw)
+  })
+}
+
+pub fn query_parameters(parameters) {
+  list.filter_map(parameters, fn(p) {
+    case p {
+      QueryParameter(name: n, required: r, schema: s, ..) -> Ok(#(n, r, s))
+      _ -> Error(Nil)
+    }
+  })
+}
+
+pub fn gather_match(pattern, parameters) {
+  case pattern {
+    "/" <> pattern -> {
+      string.split(pattern, "/")
+      |> list.try_map(fn(segment) {
+        case segment {
+          "{" <> rest -> {
+            let label = string.drop_right(rest, 1)
+            case get_parameter(parameters, label) {
+              Ok(PathParameter(schema: schema, ..)) ->
+                Ok(MatchSegment(label, schema))
+              _ -> Error(Nil)
+            }
+          }
+          name -> Ok(FixedSegment(name))
+        }
+      })
+    }
+    _ -> Error(Nil)
   }
 }
 
-fn with_default(decoder, value) {
-  fn(raw) {
-    use decoded <- try(decoder(raw))
-    Ok(option.unwrap(decoded, value))
+pub fn fetch_schema(ref, schemas) {
+  case ref {
+    Inline(schema) -> schema
+    Ref("#/components/schemas/" <> name) -> {
+      let assert Ok(schema) = dict.get(schemas, name)
+      schema
+    }
+    Ref(x) -> {
+      io.debug(x)
+      panic as "not valid ref"
+    }
+  }
+}
+
+pub fn fetch_parameter(ref, parameters) {
+  case ref {
+    Inline(parameter) -> parameter
+    Ref("#/components/parameters/" <> name) -> {
+      let assert Ok(Inline(parameter)) = dict.get(parameters, name)
+      parameter
+    }
+    Ref(x) -> {
+      io.debug(x)
+      panic as "not valid ref"
+    }
+  }
+}
+
+pub fn fetch_request_body(ref, request_bodies) {
+  case ref {
+    Inline(request_body) -> request_body
+    Ref("#/components/requestBodies/" <> name) -> {
+      let assert Ok(Inline(request_body)) = dict.get(request_bodies, name)
+      request_body
+    }
+    Ref(x) -> {
+      io.debug(x)
+      panic as "not valid ref"
+    }
+  }
+}
+
+pub fn fetch_response(ref, responses) {
+  case ref {
+    Inline(response) -> response
+    Ref("#/components/responses/" <> name) -> {
+      let assert Ok(Inline(response)) = dict.get(responses, name)
+      response
+    }
+    Ref(x) -> {
+      io.debug(x)
+      panic as "not valid ref"
+    }
   }
 }
