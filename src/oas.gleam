@@ -261,20 +261,20 @@ pub type Parameter {
     name: String,
     description: Option(String),
     required: Bool,
-    schema: Schema,
+    schema: Ref(Schema),
   )
-  PathParameter(name: String, schema: Schema)
+  PathParameter(name: String, schema: Ref(Schema))
   HeaderParameter(
     name: String,
     description: Option(String),
     required: Bool,
-    schema: Schema,
+    schema: Ref(Schema),
   )
   CookieParameter(
     name: String,
     description: Option(String),
     required: Bool,
-    schema: Schema,
+    schema: Ref(Schema),
   )
 }
 
@@ -290,7 +290,7 @@ fn parameter_decoder(raw) {
             dynamic.optional_field("description", dynamic.string),
             dynamic.optional_field("required", dynamic.bool)
               |> with_default(False),
-            dynamic.field("schema", schema_decoder),
+            dynamic.field("schema", ref_decoder(schema_decoder)),
           )(raw)
         }
         "header" -> {
@@ -300,14 +300,14 @@ fn parameter_decoder(raw) {
             dynamic.optional_field("description", dynamic.string),
             dynamic.optional_field("required", dynamic.bool)
               |> with_default(False),
-            dynamic.field("schema", schema_decoder),
+            dynamic.field("schema", ref_decoder(schema_decoder)),
           )(raw)
         }
         "path" ->
           dynamic.decode2(
             PathParameter,
             dynamic.field("name", dynamic.string),
-            dynamic.field("schema", schema_decoder),
+            dynamic.field("schema", ref_decoder(schema_decoder)),
           )(raw)
 
         "cookie" ->
@@ -317,7 +317,7 @@ fn parameter_decoder(raw) {
             dynamic.optional_field("description", dynamic.string),
             dynamic.optional_field("required", dynamic.bool)
               |> with_default(False),
-            dynamic.field("schema", schema_decoder),
+            dynamic.field("schema", ref_decoder(schema_decoder)),
           )(raw)
         _ -> Error([dynamic.DecodeError("valid in field", in, [])])
       }
@@ -399,7 +399,7 @@ fn status_decoder(raw) {
 pub type Response {
   Response(
     description: Option(String),
-    headers: Dict(String, Header),
+    headers: Dict(String, Ref(Header)),
     content: Dict(String, MediaType),
   )
 }
@@ -410,7 +410,7 @@ fn response_decoder(raw) {
     optional_field("description", dynamic.string),
     default_field(
       "headers",
-      dynamic.dict(dynamic.string, decode_header),
+      dynamic.dict(dynamic.string, ref_decoder(decode_header)),
       dict.new(),
     ),
     default_field("content", content_decoder, dict.new()),
@@ -450,6 +450,8 @@ pub type Schema {
   Array(Ref(Schema))
   Object(properties: Dict(String, Ref(Schema)))
   AllOf(List(Ref(Dict(String, Ref(Schema)))))
+  AnyOf(List(Ref(Schema)))
+  OneOf(List(Ref(Schema)))
 }
 
 fn schema_decoder(raw) {
@@ -476,6 +478,14 @@ fn schema_decoder(raw) {
     dynamic.field(
       "allOf",
       dynamic.decode1(AllOf, dynamic.list(ref_decoder(decode_properties))),
+    ),
+    dynamic.field(
+      "anyOf",
+      dynamic.decode1(AnyOf, dynamic.list(ref_decoder(schema_decoder))),
+    ),
+    dynamic.field(
+      "oneOf",
+      dynamic.decode1(OneOf, dynamic.list(ref_decoder(schema_decoder))),
     ),
   ])(raw)
 }
@@ -518,7 +528,7 @@ pub fn query_parameters(parameters) {
   })
 }
 
-pub fn gather_match(pattern, parameters) {
+pub fn gather_match(pattern, parameters, components: Components) {
   case pattern {
     "/" <> pattern -> {
       string.split(pattern, "/")
@@ -527,8 +537,10 @@ pub fn gather_match(pattern, parameters) {
           "{" <> rest -> {
             let label = string.drop_right(rest, 1)
             case get_parameter(parameters, label) {
-              Ok(PathParameter(schema: schema, ..)) ->
+              Ok(PathParameter(schema: schema, ..)) -> {
+                let schema = fetch_schema(schema, components.schemas)
                 Ok(MatchSegment(label, schema))
+              }
               _ -> Error(Nil)
             }
           }
