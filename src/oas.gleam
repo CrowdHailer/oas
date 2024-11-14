@@ -64,14 +64,20 @@ pub fn decoder(top) {
   )(top)
 }
 
+/// Node in the Specification that might be represented by a reference.
 pub type Ref(t) {
-  Ref(ref: String)
+  Ref(ref: String, summary: Option(String), description: Option(String))
   Inline(value: t)
 }
 
 fn ref_decoder(of: dynamic.Decoder(t)) -> dynamic.Decoder(Ref(t)) {
   dynamic.any([
-    dynamic.decode1(Ref, dynamic.field("$ref", dynamic.string)),
+    dynamic.decode3(
+      Ref,
+      dynamic.field("$ref", dynamic.string),
+      optional_field("summary", dynamic.string),
+      optional_field("description", dynamic.string),
+    ),
     dynamic.decode1(Inline, of),
   ])
 }
@@ -102,6 +108,7 @@ fn info_decoder(raw) {
   )(raw)
 }
 
+/// Contact information for the exposed API.
 pub type Contact {
   Contact(name: Option(String), url: Option(String), email: Option(String))
 }
@@ -115,6 +122,7 @@ fn contact_decoder(raw) {
   )(raw)
 }
 
+/// License information for the exposed API.
 pub type Licence {
   Licence(name: String, identifier: Option(String), url: Option(String))
 }
@@ -128,6 +136,7 @@ fn license_decoder(raw) {
   )(raw)
 }
 
+/// An object representing a Server.
 pub type Server {
   Server(
     url: String,
@@ -149,6 +158,7 @@ fn server_decoder(raw) {
   )(raw)
 }
 
+/// An object representing a Server Variable for server URL template substitution.
 pub type ServerVariable {
   ServerVariable(
     enum: List(String),
@@ -221,6 +231,8 @@ fn path_decoder(raw) {
   )(raw)
 }
 
+/// Holds a set of reusable objects for different aspects of the OAS.
+/// All objects defined within the components object will have no effect on the API unless they are explicitly referenced from properties outside the components object.
 pub type Components {
   Components(
     schemas: Dict(String, Schema),
@@ -256,6 +268,11 @@ fn components_decoder(raw) {
   )(raw)
 }
 
+/// Describes a single operation parameter.
+///
+/// There are four possible parameter locations specified by the `in` field:
+/// `path`, `query`, `header` and `cookie`.
+/// A unique parameter is defined by a combination of a name and location.
 pub type Parameter {
   QueryParameter(
     name: String,
@@ -325,6 +342,7 @@ fn parameter_decoder(raw) {
   ])(raw)
 }
 
+/// Describes a single API operation on a path.
 pub type Operation {
   Operation(
     tags: List(String),
@@ -357,6 +375,7 @@ fn operation_decoder(raw) {
   )(raw)
 }
 
+/// Describes a single request body.
 pub type RequestBody {
   RequestBody(
     description: Option(String),
@@ -370,8 +389,7 @@ fn request_body_decoder(raw) {
     RequestBody,
     dynamic.optional_field("description", dynamic.string),
     dynamic.field("content", content_decoder),
-    dynamic.optional_field("required", dynamic.bool)
-      |> with_default(False),
+    default_field("required", dynamic.bool, False),
   )(raw)
 }
 
@@ -396,6 +414,7 @@ fn status_decoder(raw) {
   }
 }
 
+/// Describes a single response from an API Operation
 pub type Response {
   Response(
     description: Option(String),
@@ -431,6 +450,7 @@ fn decode_header(raw) {
   )(raw)
 }
 
+/// Each Media Type Object provides schema and examples for the media type identified by its key.
 pub type MediaType {
   MediaType(schema: Ref(Schema))
 }
@@ -442,6 +462,7 @@ fn media_type_decoder(raw) {
   )(raw)
 }
 
+/// Represents a decoded JSON schema.
 pub type Schema {
   Boolean
   Integer
@@ -555,12 +576,12 @@ pub fn gather_match(pattern, parameters, components: Components) {
 pub fn fetch_schema(ref, schemas) {
   case ref {
     Inline(schema) -> schema
-    Ref("#/components/schemas/" <> name) -> {
+    Ref(ref: "#/components/schemas/" <> name, ..) -> {
       let assert Ok(schema) = dict.get(schemas, name)
       schema
     }
-    Ref(x) -> {
-      io.debug(x)
+    Ref(ref: ref, ..) -> {
+      io.debug(ref)
       panic as "not valid ref"
     }
   }
@@ -569,12 +590,12 @@ pub fn fetch_schema(ref, schemas) {
 pub fn fetch_parameter(ref, parameters) {
   case ref {
     Inline(parameter) -> parameter
-    Ref("#/components/parameters/" <> name) -> {
+    Ref(ref: "#/components/parameters/" <> name, ..) -> {
       let assert Ok(Inline(parameter)) = dict.get(parameters, name)
       parameter
     }
-    Ref(x) -> {
-      io.debug(x)
+    Ref(ref: ref, ..) -> {
+      io.debug(ref)
       panic as "not valid ref"
     }
   }
@@ -583,12 +604,12 @@ pub fn fetch_parameter(ref, parameters) {
 pub fn fetch_request_body(ref, request_bodies) {
   case ref {
     Inline(request_body) -> request_body
-    Ref("#/components/requestBodies/" <> name) -> {
+    Ref(ref: "#/components/requestBodies/" <> name, ..) -> {
       let assert Ok(Inline(request_body)) = dict.get(request_bodies, name)
       request_body
     }
-    Ref(x) -> {
-      io.debug(x)
+    Ref(ref: ref, ..) -> {
+      io.debug(ref)
       panic as "not valid ref"
     }
   }
@@ -597,12 +618,12 @@ pub fn fetch_request_body(ref, request_bodies) {
 pub fn fetch_response(ref, responses) {
   case ref {
     Inline(response) -> response
-    Ref("#/components/responses/" <> name) -> {
+    Ref(ref: "#/components/responses/" <> name, ..) -> {
       let assert Ok(Inline(response)) = dict.get(responses, name)
       response
     }
-    Ref(x) -> {
-      io.debug(x)
+    Ref(ref: ref, ..) -> {
+      io.debug(ref)
       panic as "not valid ref"
     }
   }
