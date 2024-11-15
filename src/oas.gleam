@@ -32,6 +32,13 @@ fn with_default(decoder, value) {
   }
 }
 
+fn add_to_decode_error_path(
+  error: dynamic.DecodeError,
+  path: String,
+) -> dynamic.DecodeError {
+  dynamic.DecodeError(..error, path: list.append(error.path, [path]))
+}
+
 /// This is the root object of the OpenAPI document.
 pub type Document {
   Document(
@@ -176,7 +183,7 @@ fn server_variable_decoder(raw) {
   )(raw)
 }
 
-/// Describes the operations available on a single path. 
+/// Describes the operations available on a single path.
 pub type PathItem {
   PathItem(
     summary: Option(String),
@@ -242,14 +249,11 @@ pub type Components {
   )
 }
 
-fn components_decoder(raw) {
+@internal
+pub fn components_decoder(raw) {
   dynamic.decode4(
     Components,
-    default_field(
-      "schemas",
-      dynamic.dict(dynamic.string, schema_decoder),
-      dict.new(),
-    ),
+    default_field("schemas", dictionary_decoder(schema_decoder), dict.new()),
     default_field(
       "responses",
       dynamic.dict(dynamic.string, ref_decoder(response_decoder)),
@@ -473,6 +477,31 @@ pub type Schema {
   AllOf(List(Ref(Dict(String, Ref(Schema)))))
   AnyOf(List(Ref(Schema)))
   OneOf(List(Ref(Schema)))
+}
+
+fn dictionary_decoder(value_decoder) {
+  fn(raw) {
+    dynamic.dict(dynamic.string, dynamic.dynamic)(raw)
+    |> result.then(fn(dict_with_dyn) {
+      dict.fold(
+        over: dict_with_dyn,
+        from: Ok(dict.new()),
+        with: fn(acc, key, value) {
+          case acc {
+            Error(errors) -> Error(errors)
+            Ok(dict) -> {
+              case value_decoder(value) {
+                Ok(schema) -> Ok(dict.insert(dict, key, schema))
+                Error(errors) -> {
+                  Error(list.map(errors, add_to_decode_error_path(_, key)))
+                }
+              }
+            }
+          }
+        },
+      )
+    })
+  }
 }
 
 fn schema_decoder(raw) {
