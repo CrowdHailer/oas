@@ -472,6 +472,7 @@ pub type Schema {
   Integer
   Number
   String
+  Null
   Array(Ref(Schema))
   Object(properties: Dict(String, Ref(Schema)))
   AllOf(List(Ref(Dict(String, Ref(Schema)))))
@@ -513,6 +514,7 @@ fn schema_decoder(raw) {
         "integer" -> Ok(Integer)
         "number" -> Ok(Number)
         "string" -> Ok(String)
+        "null" -> Ok(Null)
         "array" -> {
           use items <- try(dynamic.field("items", ref_decoder(schema_decoder))(
             raw,
