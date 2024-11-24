@@ -549,7 +549,7 @@ fn decode_object(raw) {
 fn decode_properties(raw) {
   default_field(
     "properties",
-    dynamic.dict(dynamic.string, ref_decoder(schema_decoder)),
+    dictionary_decoder(ref_decoder(schema_decoder)),
     dict.new(),
   )(raw)
 }
