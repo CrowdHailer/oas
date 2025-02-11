@@ -587,7 +587,7 @@ pub fn gather_match(pattern, parameters, components: Components) {
       |> list.try_map(fn(segment) {
         case segment {
           "{" <> rest -> {
-            let label = string.drop_right(rest, 1)
+            let label = string.drop_end(rest, 1)
             case get_parameter(parameters, label) {
               Ok(PathParameter(schema: schema, ..)) -> {
                 let schema = fetch_schema(schema, components.schemas)
