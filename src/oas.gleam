@@ -467,14 +467,59 @@ fn media_type_decoder(raw) {
 }
 
 /// Represents a decoded JSON schema.
+/// 
+/// Chosen not to support additional properties
+/// Chosen to add metadata inline as it doesn't belong on ref object
+/// https://json-schema.org/draft/2020-12/json-schema-validation#name-a-vocabulary-for-basic-meta
 pub type Schema {
-  Boolean
-  Integer
-  Number
-  String
-  Null
-  Array(Ref(Schema))
-  Object(properties: Dict(String, Ref(Schema)))
+  Boolean(title: Option(String), description: Option(String), deprecated: Bool)
+  Integer(
+    multiple_of: Option(Int),
+    maximum: Option(Int),
+    exclusive_maximum: Option(Int),
+    minimum: Option(Int),
+    exclusive_minimum: Option(Int),
+    title: Option(String),
+    description: Option(String),
+    deprecated: Bool,
+  )
+  Number(
+    multiple_of: Option(Int),
+    maximum: Option(Int),
+    exclusive_maximum: Option(Int),
+    minimum: Option(Int),
+    exclusive_minimum: Option(Int),
+    title: Option(String),
+    description: Option(String),
+    deprecated: Bool,
+  )
+  String(
+    max_length: Option(Int),
+    min_length: Option(Int),
+    pattern: Option(String),
+    // There is an enum of accepted formats but it is extended by OAS spec.
+    format: Option(String),
+    title: Option(String),
+    description: Option(String),
+    deprecated: Bool,
+  )
+  Null(title: Option(String), description: Option(String), deprecated: Bool)
+  Array(
+    max_items: Option(Int),
+    min_items: Option(Int),
+    unique_items: Bool,
+    items: Ref(Schema),
+    title: Option(String),
+    description: Option(String),
+    deprecated: Bool,
+  )
+  Object(
+    properties: Dict(String, Ref(Schema)),
+    required: List(String),
+    title: Option(String),
+    description: Option(String),
+    deprecated: Bool,
+  )
   AllOf(List(Ref(Dict(String, Ref(Schema)))))
   AnyOf(List(Ref(Schema)))
   OneOf(List(Ref(Schema)))
@@ -510,16 +555,66 @@ fn schema_decoder(raw) {
     dynamic.field("type", fn(field) {
       use type_ <- try(dynamic.string(field))
       case type_ {
-        "boolean" -> Ok(Boolean)
-        "integer" -> Ok(Integer)
-        "number" -> Ok(Number)
-        "string" -> Ok(String)
-        "null" -> Ok(Null)
+        "boolean" ->
+          dynamic.decode3(
+            Boolean,
+            decode_title,
+            decode_description,
+            decode_deprecated,
+          )(raw)
+        "integer" ->
+          dynamic.decode8(
+            Integer,
+            optional_field("multipleOf", dynamic.int),
+            optional_field("maximum", dynamic.int),
+            optional_field("exclusiveMaximum", dynamic.int),
+            optional_field("minimum", dynamic.int),
+            optional_field("exclusiveMinimum", dynamic.int),
+            decode_title,
+            decode_description,
+            decode_deprecated,
+          )(raw)
+        "number" ->
+          dynamic.decode8(
+            Number,
+            optional_field("multipleOf", dynamic.int),
+            optional_field("maximum", dynamic.int),
+            optional_field("exclusiveMaximum", dynamic.int),
+            optional_field("minimum", dynamic.int),
+            optional_field("exclusiveMinimum", dynamic.int),
+            decode_title,
+            decode_description,
+            decode_deprecated,
+          )(raw)
+        "string" ->
+          dynamic.decode7(
+            String,
+            optional_field("maxLength", dynamic.int),
+            optional_field("minLength", dynamic.int),
+            optional_field("pattern", dynamic.string),
+            optional_field("format", dynamic.string),
+            decode_title,
+            decode_description,
+            decode_deprecated,
+          )(raw)
+        "null" ->
+          dynamic.decode3(
+            Null,
+            decode_title,
+            decode_description,
+            decode_deprecated,
+          )(raw)
         "array" -> {
-          use items <- try(dynamic.field("items", ref_decoder(schema_decoder))(
-            raw,
-          ))
-          Ok(Array(items))
+          dynamic.decode7(
+            Array,
+            optional_field("maxItems", dynamic.int),
+            optional_field("minItems", dynamic.int),
+            default_field("uniqueItems", dynamic.bool, False),
+            dynamic.field("items", ref_decoder(schema_decoder)),
+            decode_title,
+            decode_description,
+            decode_deprecated,
+          )(raw)
         }
         "object" -> decode_object(raw)
         _ -> {
@@ -543,7 +638,14 @@ fn schema_decoder(raw) {
 }
 
 fn decode_object(raw) {
-  dynamic.decode1(Object, decode_properties)(raw)
+  dynamic.decode5(
+    Object,
+    decode_properties,
+    decode_required,
+    decode_title,
+    decode_description,
+    decode_deprecated,
+  )(raw)
 }
 
 fn decode_properties(raw) {
@@ -552,6 +654,22 @@ fn decode_properties(raw) {
     dictionary_decoder(ref_decoder(schema_decoder)),
     dict.new(),
   )(raw)
+}
+
+fn decode_required(raw) {
+  default_field("required", dynamic.list(dynamic.string), [])(raw)
+}
+
+fn decode_title(raw) {
+  optional_field("title", dynamic.string)(raw)
+}
+
+fn decode_description(raw) {
+  optional_field("description", dynamic.string)(raw)
+}
+
+fn decode_deprecated(raw) {
+  default_field("deprecated", dynamic.bool, False)(raw)
 }
 
 // --------------------------------------------------------------------
