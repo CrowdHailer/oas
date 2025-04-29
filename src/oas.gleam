@@ -472,13 +472,19 @@ fn media_type_decoder(raw) {
 /// Chosen to add metadata inline as it doesn't belong on ref object
 /// https://json-schema.org/draft/2020-12/json-schema-validation#name-a-vocabulary-for-basic-meta
 pub type Schema {
-  Boolean(title: Option(String), description: Option(String), deprecated: Bool)
+  Boolean(
+    nullable: Bool,
+    title: Option(String),
+    description: Option(String),
+    deprecated: Bool,
+  )
   Integer(
     multiple_of: Option(Int),
     maximum: Option(Int),
     exclusive_maximum: Option(Int),
     minimum: Option(Int),
     exclusive_minimum: Option(Int),
+    nullable: Bool,
     title: Option(String),
     description: Option(String),
     deprecated: Bool,
@@ -489,6 +495,7 @@ pub type Schema {
     exclusive_maximum: Option(Int),
     minimum: Option(Int),
     exclusive_minimum: Option(Int),
+    nullable: Bool,
     title: Option(String),
     description: Option(String),
     deprecated: Bool,
@@ -499,6 +506,7 @@ pub type Schema {
     pattern: Option(String),
     // There is an enum of accepted formats but it is extended by OAS spec.
     format: Option(String),
+    nullable: Bool,
     title: Option(String),
     description: Option(String),
     deprecated: Bool,
@@ -509,6 +517,7 @@ pub type Schema {
     min_items: Option(Int),
     unique_items: Bool,
     items: Ref(Schema),
+    nullable: Bool,
     title: Option(String),
     description: Option(String),
     deprecated: Bool,
@@ -516,6 +525,7 @@ pub type Schema {
   Object(
     properties: Dict(String, Ref(Schema)),
     required: List(String),
+    nullable: Bool,
     title: Option(String),
     description: Option(String),
     deprecated: Bool,
@@ -556,43 +566,47 @@ fn schema_decoder(raw) {
       use type_ <- try(dynamic.string(field))
       case type_ {
         "boolean" ->
-          dynamic.decode3(
+          dynamic.decode4(
             Boolean,
+            decode_nullable,
             decode_title,
             decode_description,
             decode_deprecated,
           )(raw)
         "integer" ->
-          dynamic.decode8(
+          dynamic.decode9(
             Integer,
             optional_field("multipleOf", dynamic.int),
             optional_field("maximum", dynamic.int),
             optional_field("exclusiveMaximum", dynamic.int),
             optional_field("minimum", dynamic.int),
             optional_field("exclusiveMinimum", dynamic.int),
+            decode_nullable,
             decode_title,
             decode_description,
             decode_deprecated,
           )(raw)
         "number" ->
-          dynamic.decode8(
+          dynamic.decode9(
             Number,
             optional_field("multipleOf", dynamic.int),
             optional_field("maximum", dynamic.int),
             optional_field("exclusiveMaximum", dynamic.int),
             optional_field("minimum", dynamic.int),
             optional_field("exclusiveMinimum", dynamic.int),
+            decode_nullable,
             decode_title,
             decode_description,
             decode_deprecated,
           )(raw)
         "string" ->
-          dynamic.decode7(
+          dynamic.decode8(
             String,
             optional_field("maxLength", dynamic.int),
             optional_field("minLength", dynamic.int),
             optional_field("pattern", dynamic.string),
             optional_field("format", dynamic.string),
+            decode_nullable,
             decode_title,
             decode_description,
             decode_deprecated,
@@ -605,18 +619,28 @@ fn schema_decoder(raw) {
             decode_deprecated,
           )(raw)
         "array" -> {
-          dynamic.decode7(
+          dynamic.decode8(
             Array,
             optional_field("maxItems", dynamic.int),
             optional_field("minItems", dynamic.int),
             default_field("uniqueItems", dynamic.bool, False),
             dynamic.field("items", ref_decoder(schema_decoder)),
+            decode_nullable,
             decode_title,
             decode_description,
             decode_deprecated,
           )(raw)
         }
-        "object" -> decode_object(raw)
+        "object" ->
+          dynamic.decode6(
+            Object,
+            decode_properties,
+            decode_required,
+            decode_nullable,
+            decode_title,
+            decode_description,
+            decode_deprecated,
+          )(raw)
         _ -> {
           Error([dynamic.DecodeError("json type", type_, [])])
         }
@@ -637,17 +661,6 @@ fn schema_decoder(raw) {
   ])(raw)
 }
 
-fn decode_object(raw) {
-  dynamic.decode5(
-    Object,
-    decode_properties,
-    decode_required,
-    decode_title,
-    decode_description,
-    decode_deprecated,
-  )(raw)
-}
-
 fn decode_properties(raw) {
   default_field(
     "properties",
@@ -658,6 +671,10 @@ fn decode_properties(raw) {
 
 fn decode_required(raw) {
   default_field("required", dynamic.list(dynamic.string), [])(raw)
+}
+
+fn decode_nullable(raw) {
+  default_field("nullable", dynamic.bool, False)(raw)
 }
 
 fn decode_title(raw) {
@@ -711,14 +728,14 @@ pub fn gather_match(pattern, parameters, components: Components) {
                 let schema = fetch_schema(schema, components.schemas)
                 Ok(MatchSegment(label, schema))
               }
-              _ -> Error(Nil)
+              _ -> Error("Don't have a matching parameter for: " <> label)
             }
           }
           name -> Ok(FixedSegment(name))
         }
       })
     }
-    _ -> Error(Nil)
+    _ -> Error("pattern must start with '/'")
   }
 }
 

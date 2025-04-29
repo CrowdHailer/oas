@@ -47,6 +47,29 @@ Contributions to add these are welcome. They will not require a breaking change 
 - external docs
 - security schemas
 
+## Notes
+
+### Nullability
+
+OpenAPI 3.0.x was build on "JSON Schema Specification Wright Draft 00"
+The OpenAPI spec defines a `nullable` field on all schema data types.
+As an extension to the JSON Schema draft.
+
+OpenAPI 3.1.x uses "https://tools.ietf.org/html/draft-bhutton-json-schema-validation-00#section-6.1.1"
+This version of the spec allows lists of types in the data model.
+A nullable type should be represented by `"type": ["null", "string"]`
+
+While `nullable` is not needed it is still supported for backwards compatability.
+Several specs still exist on 3.0.x versions, for example githubs.
+
+### Nullable and not required
+
+To create full fidelity with the API such a field should have a type of `Option(Option(T))`
+In most cases there is no value exposing this to the users.
+
+The one API where it is worth exposing is if posting to an endpoint with patch semantics.
+A missing field indicates no change. A present field with value of null means set the field to null.
+
 ## Credit
 
 Created for [EYG](https://eyg.run/), a new integration focused programming language.
