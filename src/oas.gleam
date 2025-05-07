@@ -533,6 +533,8 @@ pub type Schema {
   AllOf(List(Ref(Dict(String, Ref(Schema)))))
   AnyOf(List(Ref(Schema)))
   OneOf(List(Ref(Schema)))
+  AlwaysPasses
+  AlwaysFails
 }
 
 fn dictionary_decoder(value_decoder) {
@@ -658,6 +660,23 @@ fn schema_decoder(raw) {
       "oneOf",
       dynamic.decode1(OneOf, dynamic.list(ref_decoder(schema_decoder))),
     ),
+    fn(raw) {
+      case dynamic.bool(raw) {
+        Ok(True) -> Ok(AlwaysPasses)
+        Ok(False) -> Ok(AlwaysFails)
+        Error(reason) -> Error(reason)
+      }
+    },
+    fn(raw) {
+      case dynamic.dict(dynamic.string, dynamic.string)(raw) {
+        Ok(out) ->
+          case out == dict.new() {
+            True -> Ok(AlwaysPasses)
+            False -> Ok(AlwaysFails)
+          }
+        Error(reason) -> Error(reason)
+      }
+    },
   ])(raw)
 }
 

@@ -70,6 +70,14 @@ In most cases there is no value exposing this to the users.
 The one API where it is worth exposing is if posting to an endpoint with patch semantics.
 A missing field indicates no change. A present field with value of null means set the field to null.
 
+### Boolean JSON schemas
+https://json-schema.org/draft/2020-12/json-schema-core#section-4.3.2
+
+A schema value of `true` is equivalent to an empty schema `{}` and will always validate.
+A schema value of `false` is equivalent to a schema that will never validate.
+
+These "types" are decoded as `oas.AlwayPasses` and `oas.AlwaysFails` respectively.
+
 ## Credit
 
 Created for [EYG](https://eyg.run/), a new integration focused programming language.
