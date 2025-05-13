@@ -1,5 +1,5 @@
 name = "oas"
-version = "2.1.0"
+version = "2.1.1"
 target = "javascript"
 description = "Parse an open api (previously swagger) spec."
 licences = ["Apache-2.0"]

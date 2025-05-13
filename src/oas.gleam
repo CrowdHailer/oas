@@ -565,7 +565,26 @@ fn dictionary_decoder(value_decoder) {
 fn schema_decoder(raw) {
   dynamic.any([
     dynamic.field("type", fn(field) {
-      use type_ <- try(dynamic.string(field))
+      use #(type_, decode_nullable) <- try({
+        case dynamic.string(field) {
+          Ok(type_) -> Ok(#(type_, decode_nullable))
+          Error(_) ->
+            case dynamic.list(dynamic.string)(field) {
+              Ok(["null", type_]) | Ok([type_, "null"]) ->
+                Ok(#(type_, fn(_) { Ok(True) }))
+              Ok([type_]) -> Ok(#(type_, decode_nullable))
+              Ok(_) ->
+                Error([
+                  dynamic.DecodeError(
+                    "Expected a string or list of strings",
+                    dynamic.classify(field),
+                    [],
+                  ),
+                ])
+              Error(reason) -> Error(reason)
+            }
+        }
+      })
       case type_ {
         "boolean" ->
           dynamic.decode4(

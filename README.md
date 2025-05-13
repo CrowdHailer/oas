@@ -62,6 +62,8 @@ A nullable type should be represented by `"type": ["null", "string"]`
 While `nullable` is not needed it is still supported for backwards compatability.
 Several specs still exist on 3.0.x versions, for example githubs.
 
+**OAS supports parsing lists for the `type` only if it contains one item or two items where one is null.**
+
 ### Nullable and not required
 
 To create full fidelity with the API such a field should have a type of `Option(Option(T))`
