@@ -7,6 +7,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result.{try}
 import gleam/string
+import gleam/uri.{Uri}
 
 fn default_field(key, decoder, default) {
   optional_field(key, decoder)
@@ -754,8 +755,8 @@ pub fn query_parameters(parameters) {
 }
 
 pub fn gather_match(pattern, parameters, components: Components) {
-  case pattern {
-    "/" <> pattern -> {
+  case uri.parse(pattern) {
+    Ok(Uri(path: "/" <> pattern, ..)) -> {
       string.split(pattern, "/")
       |> list.try_map(fn(segment) {
         case segment {
@@ -773,7 +774,7 @@ pub fn gather_match(pattern, parameters, components: Components) {
         }
       })
     }
-    _ -> Error("pattern must start with '/'")
+    _ -> Error("pattern must start with '/' and be valid url")
   }
 }
 
