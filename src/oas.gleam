@@ -538,6 +538,7 @@ fn decode_properties(k) {
 }
 
 fn schema_decoder() {
+  use <- decode.recursive()
   decode.one_of(
     {
       use type_ <- decode.field("type", decode.string)
