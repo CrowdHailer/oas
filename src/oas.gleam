@@ -1,43 +1,22 @@
 import gleam/dict.{type Dict}
 import gleam/dynamic
+import gleam/dynamic/decode
 import gleam/http
 import gleam/int
 import gleam/io
 import gleam/list
 import gleam/option.{type Option, None, Some}
-import gleam/result.{try}
+import gleam/pair
+import gleam/result
 import gleam/string
 import gleam/uri.{Uri}
 
-fn default_field(key, decoder, default) {
-  optional_field(key, decoder)
-  |> with_default(default)
+fn default_field(key, decoder, default, k) {
+  decode.optional_field(key, default, decoder, k)
 }
 
-fn optional_field(key, decoder) {
-  fn(raw) {
-    let decoder = dynamic.optional_field(key, dynamic.optional(decoder))
-    use decoded <- try(decoder(raw))
-    case decoded {
-      Some(Some(value)) -> Some(value)
-      _ -> None
-    }
-    |> Ok
-  }
-}
-
-fn with_default(decoder, value) {
-  fn(raw) {
-    use decoded <- try(decoder(raw))
-    Ok(option.unwrap(decoded, value))
-  }
-}
-
-fn add_to_decode_error_path(
-  error: dynamic.DecodeError,
-  path: String,
-) -> dynamic.DecodeError {
-  dynamic.DecodeError(..error, path: list.append(error.path, [path]))
+fn optional_field(key, decoder, k) {
+  decode.optional_field(key, None, decode.map(decoder, Some), k)
 }
 
 /// This is the root object of the OpenAPI document.
@@ -56,20 +35,25 @@ pub type Document {
   )
 }
 
-pub fn decoder(top) {
-  dynamic.decode6(
-    Document,
-    dynamic.field("openapi", dynamic.string),
-    dynamic.field("info", info_decoder),
-    optional_field("jsonSchemaDialect", dynamic.string),
-    default_field("servers", dynamic.list(server_decoder), []),
-    default_field("paths", paths_decoder, dict.new()),
-    default_field(
-      "components",
-      components_decoder,
-      Components(dict.new(), dict.new(), dict.new(), dict.new()),
-    ),
-  )(top)
+pub fn decoder() -> decode.Decoder(Document) {
+  use openapi <- decode.field("openapi", decode.string)
+  use info <- decode.field("info", info_decoder())
+  use json_schema_dialect <- optional_field("jsonSchemaDialect", decode.string)
+  use servers <- default_field("servers", decode.list(server_decoder()), [])
+  use paths <- default_field("paths", paths_decoder(), dict.new())
+  use components <- default_field(
+    "components",
+    components_decoder(),
+    Components(dict.new(), dict.new(), dict.new(), dict.new()),
+  )
+  decode.success(Document(
+    openapi,
+    info,
+    json_schema_dialect,
+    servers,
+    paths,
+    components,
+  ))
 }
 
 /// Node in the Specification that might be represented by a reference.
@@ -78,16 +62,16 @@ pub type Ref(t) {
   Inline(value: t)
 }
 
-fn ref_decoder(of: dynamic.Decoder(t)) -> dynamic.Decoder(Ref(t)) {
-  dynamic.any([
-    dynamic.decode3(
-      Ref,
-      dynamic.field("$ref", dynamic.string),
-      optional_field("summary", dynamic.string),
-      optional_field("description", dynamic.string),
-    ),
-    dynamic.decode1(Inline, of),
-  ])
+fn ref_decoder(of: decode.Decoder(t)) -> decode.Decoder(Ref(t)) {
+  decode.one_of(
+    {
+      use ref <- decode.field("$ref", decode.string)
+      use summary <- optional_field("summary", decode.string)
+      use description <- optional_field("description", decode.string)
+      decode.success(Ref(ref, summary, description))
+    },
+    [decode.map(of, Inline)],
+  )
 }
 
 /// The object provides metadata about the API. The metadata MAY be used by the clients if needed, and MAY be presented in editing or documentation generation tools for convenience.
@@ -103,17 +87,23 @@ pub type Info {
   )
 }
 
-fn info_decoder(raw) {
-  dynamic.decode7(
-    Info,
-    dynamic.field("title", dynamic.string),
-    optional_field("summary", dynamic.string),
-    optional_field("description", dynamic.string),
-    optional_field("termsOfService", dynamic.string),
-    optional_field("contact", contact_decoder),
-    optional_field("license", license_decoder),
-    dynamic.field("version", dynamic.string),
-  )(raw)
+fn info_decoder() {
+  use title <- decode.field("title", decode.string)
+  use summary <- optional_field("summary", decode.string)
+  use description <- optional_field("description", decode.string)
+  use terms_of_service <- optional_field("termsOfService", decode.string)
+  use contact <- optional_field("contact", contact_decoder())
+  use license <- optional_field("license", license_decoder())
+  use version <- decode.field("version", decode.string)
+  decode.success(Info(
+    title,
+    summary,
+    description,
+    terms_of_service,
+    contact,
+    license,
+    version,
+  ))
 }
 
 /// Contact information for the exposed API.
@@ -121,13 +111,11 @@ pub type Contact {
   Contact(name: Option(String), url: Option(String), email: Option(String))
 }
 
-fn contact_decoder(raw) {
-  dynamic.decode3(
-    Contact,
-    optional_field("name", dynamic.string),
-    optional_field("url", dynamic.string),
-    optional_field("email", dynamic.string),
-  )(raw)
+fn contact_decoder() {
+  use name <- optional_field("name", decode.string)
+  use url <- optional_field("url", decode.string)
+  use email <- optional_field("email", decode.string)
+  decode.success(Contact(name, url, email))
 }
 
 /// License information for the exposed API.
@@ -135,13 +123,11 @@ pub type Licence {
   Licence(name: String, identifier: Option(String), url: Option(String))
 }
 
-fn license_decoder(raw) {
-  dynamic.decode3(
-    Licence,
-    dynamic.field("name", dynamic.string),
-    optional_field("identifier", dynamic.string),
-    optional_field("url", dynamic.string),
-  )(raw)
+fn license_decoder() {
+  use name <- decode.field("name", decode.string)
+  use identifier <- optional_field("identifier", decode.string)
+  use url <- optional_field("url", decode.string)
+  decode.success(Licence(name, identifier, url))
 }
 
 /// An object representing a Server.
@@ -153,17 +139,15 @@ pub type Server {
   )
 }
 
-fn server_decoder(raw) {
-  dynamic.decode3(
-    Server,
-    dynamic.field("url", dynamic.string),
-    optional_field("description", dynamic.string),
-    default_field(
-      "variables",
-      dynamic.dict(dynamic.string, server_variable_decoder),
-      dict.new(),
-    ),
-  )(raw)
+fn server_decoder() {
+  use url <- decode.field("url", decode.string)
+  use description <- optional_field("description", decode.string)
+  use variables <- default_field(
+    "variables",
+    decode.dict(decode.string, server_variable_decoder()),
+    dict.new(),
+  )
+  decode.success(Server(url, description, variables))
 }
 
 /// An object representing a Server Variable for server URL template substitution.
@@ -175,13 +159,11 @@ pub type ServerVariable {
   )
 }
 
-fn server_variable_decoder(raw) {
-  dynamic.decode3(
-    ServerVariable,
-    dynamic.field("enum", dynamic.list(dynamic.string)),
-    dynamic.field("default", dynamic.string),
-    optional_field("description", dynamic.string),
-  )(raw)
+fn server_variable_decoder() {
+  use enum <- decode.field("enum", decode.list(decode.string))
+  use default <- decode.field("default", decode.string)
+  use description <- optional_field("description", decode.string)
+  decode.success(ServerVariable(enum, default, description))
 }
 
 /// Describes the operations available on a single path.
@@ -194,49 +176,58 @@ pub type PathItem {
   )
 }
 
-fn paths_decoder(raw) {
-  dynamic.dict(dynamic.string, path_decoder)(raw)
+fn paths_decoder() {
+  decode.dict(decode.string, path_decoder())
 }
 
-fn path_decoder(raw) {
-  dynamic.decode4(
-    PathItem,
-    optional_field("summary", dynamic.string),
-    optional_field("description", dynamic.string),
-    default_field(
-      "parameters",
-      dynamic.list(ref_decoder(parameter_decoder)),
-      [],
-    ),
-    fn(raw) {
-      use maybe_operations <- try(
-        [
-          #("get", http.Get),
-          #("put", http.Put),
-          #("post", http.Post),
-          #("delete", http.Delete),
-          #("options", http.Options),
-          #("head", http.Head),
-          #("patch", http.Patch),
-          #("trace", http.Trace),
-        ]
-        |> list.map(fn(lookup) {
-          let #(key, method) = lookup
-          use maybe <- try(dynamic.optional_field(key, operation_decoder)(raw))
-          Ok(#(method, maybe))
-        })
-        |> result.all(),
-      )
-      list.filter_map(maybe_operations, fn(maybe) {
-        let #(method, maybe) = maybe
-        case maybe {
-          option.Some(value) -> Ok(#(method, value))
-          option.None -> Error(Nil)
-        }
-      })
-      |> Ok
-    },
-  )(raw)
+fn path_decoder() {
+  echo Nil
+  use summary <- optional_field("summary", decode.string)
+  use description <- optional_field("description", decode.string)
+  use parameters <- default_field(
+    "parameters",
+    decode.list(ref_decoder(parameter_decoder())),
+    [],
+  )
+  use get <- optional_field(
+    "get",
+    operation_decoder() |> decode.map(pair.new(http.Get, _)),
+  )
+  use put <- optional_field(
+    "put",
+    operation_decoder() |> decode.map(pair.new(http.Put, _)),
+  )
+  use post <- optional_field(
+    "post",
+    operation_decoder() |> decode.map(pair.new(http.Post, _)),
+  )
+  use delete <- optional_field(
+    "delete",
+    operation_decoder() |> decode.map(pair.new(http.Delete, _)),
+  )
+  use options <- optional_field(
+    "options",
+    operation_decoder() |> decode.map(pair.new(http.Options, _)),
+  )
+  use head <- optional_field(
+    "head",
+    operation_decoder() |> decode.map(pair.new(http.Head, _)),
+  )
+  use patch <- optional_field(
+    "patch",
+    operation_decoder() |> decode.map(pair.new(http.Patch, _)),
+  )
+  use trace <- optional_field(
+    "trace",
+    operation_decoder() |> decode.map(pair.new(http.Trace, _)),
+  )
+  decode.success(PathItem(
+    summary,
+    description,
+    parameters,
+    [get, put, post, delete, options, head, patch, trace]
+      |> list.filter_map(option.to_result(_, Nil)),
+  ))
 }
 
 /// Holds a set of reusable objects for different aspects of the OAS.
@@ -251,26 +242,28 @@ pub type Components {
 }
 
 @internal
-pub fn components_decoder(raw) {
-  dynamic.decode4(
-    Components,
-    default_field("schemas", dictionary_decoder(schema_decoder), dict.new()),
-    default_field(
-      "responses",
-      dynamic.dict(dynamic.string, ref_decoder(response_decoder)),
-      dict.new(),
-    ),
-    default_field(
-      "parameters",
-      dynamic.dict(dynamic.string, ref_decoder(parameter_decoder)),
-      dict.new(),
-    ),
-    default_field(
-      "requestBodies",
-      dynamic.dict(dynamic.string, ref_decoder(request_body_decoder)),
-      dict.new(),
-    ),
-  )(raw)
+pub fn components_decoder() {
+  use schemas <- default_field(
+    "schemas",
+    dictionary_decoder(schema_decoder()),
+    dict.new(),
+  )
+  use responses <- default_field(
+    "responses",
+    decode.dict(decode.string, ref_decoder(response_decoder())),
+    dict.new(),
+  )
+  use parameters <- default_field(
+    "parameters",
+    decode.dict(decode.string, ref_decoder(parameter_decoder())),
+    dict.new(),
+  )
+  use request_bodies <- default_field(
+    "requestBodies",
+    decode.dict(decode.string, ref_decoder(request_body_decoder())),
+    dict.new(),
+  )
+  decode.success(Components(schemas, responses, parameters, request_bodies))
 }
 
 /// Describes a single operation parameter.
@@ -300,51 +293,42 @@ pub type Parameter {
   )
 }
 
-fn parameter_decoder(raw) {
-  dynamic.any([
-    dynamic.field("in", fn(field) {
-      use in <- try(dynamic.string(field))
-      case in {
-        "query" -> {
-          dynamic.decode4(
-            QueryParameter,
-            dynamic.field("name", dynamic.string),
-            dynamic.optional_field("description", dynamic.string),
-            dynamic.optional_field("required", dynamic.bool)
-              |> with_default(False),
-            dynamic.field("schema", ref_decoder(schema_decoder)),
-          )(raw)
-        }
-        "header" -> {
-          dynamic.decode4(
-            HeaderParameter,
-            dynamic.field("name", dynamic.string),
-            dynamic.optional_field("description", dynamic.string),
-            dynamic.optional_field("required", dynamic.bool)
-              |> with_default(False),
-            dynamic.field("schema", ref_decoder(schema_decoder)),
-          )(raw)
-        }
-        "path" ->
-          dynamic.decode2(
-            PathParameter,
-            dynamic.field("name", dynamic.string),
-            dynamic.field("schema", ref_decoder(schema_decoder)),
-          )(raw)
+fn parameter_decoder() {
+  use in <- decode.field("in", decode.string)
+  case in {
+    "query" -> {
+      use name <- decode.field("name", decode.string)
+      use description <- optional_field("description", decode.string)
+      use required <- default_field("required", decode.bool, False)
+      use schema <- decode.field("schema", ref_decoder(schema_decoder()))
+      decode.success(QueryParameter(name, description, required, schema))
+    }
+    "header" -> {
+      use name <- decode.field("name", decode.string)
+      use description <- optional_field("description", decode.string)
+      use required <- default_field("required", decode.bool, False)
+      use schema <- decode.field("schema", ref_decoder(schema_decoder()))
+      decode.success(HeaderParameter(name, description, required, schema))
+    }
+    "path" -> {
+      use name <- decode.field("name", decode.string)
+      use schema <- decode.field("schema", ref_decoder(schema_decoder()))
+      decode.success(PathParameter(name, schema))
+    }
 
-        "cookie" ->
-          dynamic.decode4(
-            HeaderParameter,
-            dynamic.field("name", dynamic.string),
-            dynamic.optional_field("description", dynamic.string),
-            dynamic.optional_field("required", dynamic.bool)
-              |> with_default(False),
-            dynamic.field("schema", ref_decoder(schema_decoder)),
-          )(raw)
-        _ -> Error([dynamic.DecodeError("valid in field", in, [])])
-      }
-    }),
-  ])(raw)
+    "cookie" -> {
+      use name <- decode.field("name", decode.string)
+      use description <- optional_field("description", decode.string)
+      use required <- default_field("required", decode.bool, False)
+      use schema <- decode.field("schema", ref_decoder(schema_decoder()))
+      decode.success(CookieParameter(name, description, required, schema))
+    }
+    _ ->
+      decode.failure(
+        PathParameter("", Inline(Null(None, None, False))),
+        "valid in field",
+      )
+  }
 }
 
 /// Describes a single API operation on a path.
@@ -360,24 +344,33 @@ pub type Operation {
   )
 }
 
-fn operation_decoder(raw) {
-  dynamic.decode7(
-    Operation,
-    default_field("tags", dynamic.list(dynamic.string), []),
-    optional_field("summary", dynamic.string),
-    optional_field("description", dynamic.string),
-    dynamic.field("operationId", dynamic.string),
-    default_field(
-      "parameters",
-      dynamic.list(ref_decoder(parameter_decoder)),
-      [],
-    ),
-    optional_field("requestBody", ref_decoder(request_body_decoder)),
-    dynamic.field(
-      "responses",
-      dynamic.dict(status_decoder, ref_decoder(response_decoder)),
-    ),
-  )(raw)
+fn operation_decoder() {
+  use tags <- default_field("tags", decode.list(decode.string), [])
+  use summary <- optional_field("summary", decode.string)
+  use description <- optional_field("description", decode.string)
+  use operation_id <- decode.field("operationId", decode.string)
+  use parameters <- default_field(
+    "parameters",
+    decode.list(ref_decoder(parameter_decoder())),
+    [],
+  )
+  use request_body <- optional_field(
+    "requestBody",
+    ref_decoder(request_body_decoder()),
+  )
+  use responses <- decode.field(
+    "responses",
+    decode.dict(status_decoder(), ref_decoder(response_decoder())),
+  )
+  decode.success(Operation(
+    tags,
+    summary,
+    description,
+    operation_id,
+    parameters,
+    request_body,
+    responses,
+  ))
 }
 
 /// Describes a single request body.
@@ -389,17 +382,15 @@ pub type RequestBody {
   )
 }
 
-fn request_body_decoder(raw) {
-  dynamic.decode3(
-    RequestBody,
-    dynamic.optional_field("description", dynamic.string),
-    dynamic.field("content", content_decoder),
-    default_field("required", dynamic.bool, False),
-  )(raw)
+fn request_body_decoder() {
+  use description <- optional_field("description", decode.string)
+  use content <- decode.field("content", content_decoder())
+  use required <- default_field("required", decode.bool, False)
+  decode.success(RequestBody(description, content, required))
 }
 
-fn content_decoder(raw) {
-  dynamic.dict(dynamic.string, media_type_decoder)(raw)
+fn content_decoder() {
+  decode.dict(decode.string, media_type_decoder())
 }
 
 pub type Status {
@@ -407,16 +398,18 @@ pub type Status {
   Status(Int)
 }
 
-fn status_decoder(raw) {
-  use key <- try(dynamic.string(raw))
-  case key {
-    "default" -> Ok(Default)
-    key ->
-      case int.parse(key) {
-        Ok(i) -> Ok(Status(i))
-        Error(Nil) -> Error([dynamic.DecodeError("integer", key, [])])
-      }
-  }
+fn status_decoder() {
+  decode.new_primitive_decoder("default", fn(key) {
+    case decode.run(key, decode.string) {
+      Ok("default") -> Ok(Default)
+      Ok(key) ->
+        case int.parse(key) {
+          Ok(i) -> Ok(Status(i))
+          Error(Nil) -> Error(Default)
+        }
+      Error(_reason) -> Error(Default)
+    }
+  })
 }
 
 /// Describes a single response from an API Operation
@@ -428,31 +421,26 @@ pub type Response {
   )
 }
 
-fn response_decoder(raw) {
-  dynamic.decode3(
-    Response,
-    optional_field("description", dynamic.string),
-    default_field(
-      "headers",
-      dynamic.dict(dynamic.string, ref_decoder(decode_header)),
-      dict.new(),
-    ),
-    default_field("content", content_decoder, dict.new()),
-  )(raw)
+fn response_decoder() {
+  use description <- optional_field("description", decode.string)
+  use headers <- default_field(
+    "headers",
+    decode.dict(decode.string, ref_decoder(decode_header())),
+    dict.new(),
+  )
+  use content <- default_field("content", content_decoder(), dict.new())
+  decode.success(Response(description, headers, content))
 }
 
 pub type Header {
   Header(description: Option(String), required: Bool, schema: Schema)
 }
 
-fn decode_header(raw) {
-  dynamic.decode3(
-    Header,
-    dynamic.optional_field("description", dynamic.string),
-    dynamic.optional_field("required", dynamic.bool)
-      |> with_default(False),
-    dynamic.field("schema", schema_decoder),
-  )(raw)
+fn decode_header() {
+  use description <- optional_field("description", decode.string)
+  use required <- default_field("required", decode.bool, False)
+  use schema <- decode.field("schema", schema_decoder())
+  decode.success(Header(description, required, schema))
 }
 
 /// Each Media Type Object provides schema and examples for the media type identified by its key.
@@ -460,11 +448,9 @@ pub type MediaType {
   MediaType(schema: Ref(Schema))
 }
 
-fn media_type_decoder(raw) {
-  dynamic.decode1(
-    MediaType,
-    dynamic.field("schema", ref_decoder(schema_decoder)),
-  )(raw)
+fn media_type_decoder() {
+  use schema <- decode.field("schema", ref_decoder(schema_decoder()))
+  decode.success(MediaType(schema))
 }
 
 /// Represents a decoded JSON schema.
@@ -539,193 +525,240 @@ pub type Schema {
 }
 
 fn dictionary_decoder(value_decoder) {
-  fn(raw) {
-    dynamic.dict(dynamic.string, dynamic.dynamic)(raw)
-    |> result.then(fn(dict_with_dyn) {
-      dict.fold(
-        over: dict_with_dyn,
-        from: Ok(dict.new()),
-        with: fn(acc, key, value) {
-          case acc {
-            Error(errors) -> Error(errors)
-            Ok(dict) -> {
-              case value_decoder(value) {
-                Ok(schema) -> Ok(dict.insert(dict, key, schema))
-                Error(errors) -> {
-                  Error(list.map(errors, add_to_decode_error_path(_, key)))
-                }
-              }
-            }
-          }
-        },
-      )
-    })
-  }
+  decode.dict(decode.string, value_decoder)
 }
 
-fn schema_decoder(raw) {
-  dynamic.any([
-    dynamic.field("type", fn(field) {
-      use #(type_, decode_nullable) <- try({
-        case dynamic.string(field) {
-          Ok(type_) -> Ok(#(type_, decode_nullable))
-          Error(_) ->
-            case dynamic.list(dynamic.string)(field) {
-              Ok(["null", type_]) | Ok([type_, "null"]) ->
-                Ok(#(type_, fn(_) { Ok(True) }))
-              Ok([type_]) -> Ok(#(type_, decode_nullable))
-              Ok(_) ->
-                Error([
-                  dynamic.DecodeError(
-                    "Expected a string or list of strings",
-                    dynamic.classify(field),
-                    [],
-                  ),
-                ])
-              Error(reason) -> Error(reason)
-            }
-        }
-      })
-      case type_ {
-        "boolean" ->
-          dynamic.decode4(
-            Boolean,
-            decode_nullable,
-            decode_title,
-            decode_description,
-            decode_deprecated,
-          )(raw)
-        "integer" ->
-          dynamic.decode9(
-            Integer,
-            optional_field("multipleOf", dynamic.int),
-            optional_field("maximum", dynamic.int),
-            optional_field("exclusiveMaximum", dynamic.int),
-            optional_field("minimum", dynamic.int),
-            optional_field("exclusiveMinimum", dynamic.int),
-            decode_nullable,
-            decode_title,
-            decode_description,
-            decode_deprecated,
-          )(raw)
-        "number" ->
-          dynamic.decode9(
-            Number,
-            optional_field("multipleOf", dynamic.int),
-            optional_field("maximum", dynamic.int),
-            optional_field("exclusiveMaximum", dynamic.int),
-            optional_field("minimum", dynamic.int),
-            optional_field("exclusiveMinimum", dynamic.int),
-            decode_nullable,
-            decode_title,
-            decode_description,
-            decode_deprecated,
-          )(raw)
-        "string" ->
-          dynamic.decode8(
-            String,
-            optional_field("maxLength", dynamic.int),
-            optional_field("minLength", dynamic.int),
-            optional_field("pattern", dynamic.string),
-            optional_field("format", dynamic.string),
-            decode_nullable,
-            decode_title,
-            decode_description,
-            decode_deprecated,
-          )(raw)
-        "null" ->
-          dynamic.decode3(
-            Null,
-            decode_title,
-            decode_description,
-            decode_deprecated,
-          )(raw)
-        "array" -> {
-          dynamic.decode8(
-            Array,
-            optional_field("maxItems", dynamic.int),
-            optional_field("minItems", dynamic.int),
-            default_field("uniqueItems", dynamic.bool, False),
-            dynamic.field("items", ref_decoder(schema_decoder)),
-            decode_nullable,
-            decode_title,
-            decode_description,
-            decode_deprecated,
-          )(raw)
-        }
-        "object" ->
-          dynamic.decode6(
-            Object,
-            decode_properties,
-            decode_required,
-            decode_nullable,
-            decode_title,
-            decode_description,
-            decode_deprecated,
-          )(raw)
-        _ -> {
-          Error([dynamic.DecodeError("json type", type_, [])])
-        }
-      }
-    }),
-    dynamic.field(
-      "allOf",
-      dynamic.decode1(AllOf, dynamic.list(ref_decoder(decode_properties))),
-    ),
-    dynamic.field(
-      "anyOf",
-      dynamic.decode1(AnyOf, dynamic.list(ref_decoder(schema_decoder))),
-    ),
-    dynamic.field(
-      "oneOf",
-      dynamic.decode1(OneOf, dynamic.list(ref_decoder(schema_decoder))),
-    ),
-    fn(raw) {
-      case dynamic.bool(raw) {
-        Ok(True) -> Ok(AlwaysPasses)
-        Ok(False) -> Ok(AlwaysFails)
-        Error(reason) -> Error(reason)
-      }
-    },
-    fn(raw) {
-      case dynamic.dict(dynamic.string, dynamic.string)(raw) {
-        Ok(out) ->
-          case out == dict.new() {
-            True -> Ok(AlwaysPasses)
-            False -> Ok(AlwaysFails)
-          }
-        Error(reason) -> Error(reason)
-      }
-    },
-  ])(raw)
-}
-
-fn decode_properties(raw) {
+fn decode_properties(k) {
   default_field(
     "properties",
-    dictionary_decoder(ref_decoder(schema_decoder)),
+    dictionary_decoder(ref_decoder(schema_decoder())),
     dict.new(),
-  )(raw)
+    k,
+  )
 }
 
-fn decode_required(raw) {
-  default_field("required", dynamic.list(dynamic.string), [])(raw)
+fn schema_decoder() {
+  decode.one_of(
+    {
+      use type_ <- decode.field("type", decode.string)
+      echo "todo handle nullable iin list"
+      // use #(type_, decode_nullable) <- try({
+      //   case decode.string(field) {
+      //     Ok(type_) -> Ok(#(type_, decode_nullable))
+      //     Error(_) ->
+      //       case decode.list(decode.string)(field) {
+      //         Ok(["null", type_]) | Ok([type_, "null"]) ->
+      //           Ok(#(type_, fn(_) { Ok(True) }))
+      //         Ok([type_]) -> Ok(#(type_, decode_nullable))
+      //         Ok(_) ->
+      //           Error([
+      //             dynamic.DecodeError(
+      //               "Expected a string or list of strings",
+      //               dynamic.classify(field),
+      //               [],
+      //             ),
+      //           ])
+      //         Error(reason) -> Error(reason)
+      //       }
+      //   }
+      // })
+      case type_ {
+        "boolean" -> {
+          use nullable <- decode_nullable
+          use title <- decode_title
+          use description <- decode_description
+          use deprecated <- decode_deprecated
+          decode.success(Boolean(nullable, title, description, deprecated))
+        }
+        "integer" -> {
+          use multiple_of <- optional_field("multipleOf", decode.int)
+          use maximum <- optional_field("maximum", decode.int)
+          use exclusive_maximum <- optional_field(
+            "exclusiveMaximum",
+            decode.int,
+          )
+          use minimum <- optional_field("minimum", decode.int)
+          use exclusive_minimum <- optional_field(
+            "exclusiveMinimum",
+            decode.int,
+          )
+          use nullable <- decode_nullable
+          use title <- decode_title
+          use description <- decode_description
+          use deprecated <- decode_deprecated
+          decode.success(Integer(
+            multiple_of,
+            maximum,
+            exclusive_maximum,
+            minimum,
+            exclusive_minimum,
+            nullable,
+            title,
+            description,
+            deprecated,
+          ))
+        }
+        "number" -> {
+          use multiple_of <- optional_field("multipleOf", decode.int)
+          use maximum <- optional_field("maximum", decode.int)
+          use exclusive_maximum <- optional_field(
+            "exclusiveMaximum",
+            decode.int,
+          )
+          use minimum <- optional_field("minimum", decode.int)
+          use exclusive_minimum <- optional_field(
+            "exclusiveMinimum",
+            decode.int,
+          )
+          use nullable <- decode_nullable
+          use title <- decode_title
+          use description <- decode_description
+          use deprecated <- decode_deprecated
+          decode.success(Number(
+            multiple_of,
+            maximum,
+            exclusive_maximum,
+            minimum,
+            exclusive_minimum,
+            nullable,
+            title,
+            description,
+            deprecated,
+          ))
+        }
+
+        "string" -> {
+          use max_length <- optional_field("maxLength", decode.int)
+          use min_length <- optional_field("minLength", decode.int)
+          use pattern <- optional_field("pattern", decode.string)
+          use format <- optional_field("format", decode.string)
+          use nullable <- decode_nullable
+          use title <- decode_title
+          use description <- decode_description
+          use deprecated <- decode_deprecated
+          decode.success(String(
+            max_length,
+            min_length,
+            pattern,
+            format,
+            nullable,
+            title,
+            description,
+            deprecated,
+          ))
+        }
+
+        "null" -> {
+          use title <- decode_title
+          use description <- decode_description
+          use deprecated <- decode_deprecated
+          decode.success(Null(title, description, deprecated))
+        }
+        "array" -> {
+          {
+            use max_items <- optional_field("maxItems", decode.int)
+            use min_items <- optional_field("minItems", decode.int)
+            use unique_items <- default_field("uniqueItems", decode.bool, False)
+            use items <- decode.field("items", ref_decoder(schema_decoder()))
+            use nullable <- decode_nullable
+            use title <- decode_title
+            use description <- decode_description
+            use deprecated <- decode_deprecated
+            decode.success(Array(
+              max_items,
+              min_items,
+              unique_items,
+              items,
+              nullable,
+              title,
+              description,
+              deprecated,
+            ))
+          }
+        }
+        "object" -> {
+          use properties <- decode_properties
+          use required <- decode_required
+          use nullable <- decode_nullable
+          use title <- decode_title
+          use description <- decode_description
+          use deprecated <- decode_deprecated
+          decode.success(Object(
+            properties,
+            required,
+            nullable,
+            title,
+            description,
+            deprecated,
+          ))
+        }
+        _ -> decode.failure(Null(None, None, False), "Json data type")
+      }
+    },
+    [
+      {
+        use x <- decode.field(
+          "allOf",
+          decode.list(
+            ref_decoder({
+              use p <- default_field(
+                "properties",
+                dictionary_decoder(ref_decoder(schema_decoder())),
+                dict.new(),
+              )
+              decode.success(p)
+            }),
+          ),
+        )
+        decode.success(AllOf(x))
+      },
+      // decode.field(
+    //   "anyOf",
+    //   dynamic.decode1(AnyOf, decode.list(ref_decoder(schema_decoder))),
+    // ),
+    // decode.field(
+    //   "oneOf",
+    //   dynamic.decode1(OneOf, decode.list(ref_decoder(schema_decoder))),
+    // ),
+    // fn(raw) {
+    //   case decode.bool(raw) {
+    //     Ok(True) -> Ok(AlwaysPasses)
+    //     Ok(False) -> Ok(AlwaysFails)
+    //     Error(reason) -> Error(reason)
+    //   }
+    // },
+    // fn(raw) {
+    //   case decode.dict(decode.string, decode.string)(raw) {
+    //     Ok(out) ->
+    //       case out == dict.new() {
+    //         True -> Ok(AlwaysPasses)
+    //         False -> Ok(AlwaysFails)
+    //       }
+    //     Error(reason) -> Error(reason)
+    //   }
+    // },
+    ],
+  )
 }
 
-fn decode_nullable(raw) {
-  default_field("nullable", dynamic.bool, False)(raw)
+fn decode_required(k) {
+  default_field("required", decode.list(decode.string), [], k)
 }
 
-fn decode_title(raw) {
-  optional_field("title", dynamic.string)(raw)
+fn decode_nullable(k) {
+  default_field("nullable", decode.bool, False, k)
 }
 
-fn decode_description(raw) {
-  optional_field("description", dynamic.string)(raw)
+fn decode_title(k) {
+  optional_field("title", decode.string, k)
 }
 
-fn decode_deprecated(raw) {
-  default_field("deprecated", dynamic.bool, False)(raw)
+fn decode_description(k) {
+  optional_field("description", decode.string, k)
+}
+
+fn decode_deprecated(k) {
+  default_field("deprecated", decode.bool, False, k)
 }
 
 // --------------------------------------------------------------------
@@ -785,10 +818,7 @@ pub fn fetch_schema(ref, schemas) {
       let assert Ok(schema) = dict.get(schemas, name)
       schema
     }
-    Ref(ref: ref, ..) -> {
-      io.debug(ref)
-      panic as "not valid ref"
-    }
+    Ref(ref: ref, ..) -> panic as { "not a valid ref" <> ref }
   }
 }
 
@@ -799,10 +829,7 @@ pub fn fetch_parameter(ref, parameters) {
       let assert Ok(Inline(parameter)) = dict.get(parameters, name)
       parameter
     }
-    Ref(ref: ref, ..) -> {
-      io.debug(ref)
-      panic as "not valid ref"
-    }
+    Ref(ref: ref, ..) -> panic as { "not a valid ref" <> ref }
   }
 }
 
@@ -813,10 +840,7 @@ pub fn fetch_request_body(ref, request_bodies) {
       let assert Ok(Inline(request_body)) = dict.get(request_bodies, name)
       request_body
     }
-    Ref(ref: ref, ..) -> {
-      io.debug(ref)
-      panic as "not valid ref"
-    }
+    Ref(ref: ref, ..) -> panic as { "not a valid ref" <> ref }
   }
 }
 
@@ -827,9 +851,6 @@ pub fn fetch_response(ref, responses) {
       let assert Ok(Inline(response)) = dict.get(responses, name)
       response
     }
-    Ref(ref: ref, ..) -> {
-      io.debug(ref)
-      panic as "not valid ref"
-    }
+    Ref(ref: ref, ..) -> panic as { "not a valid ref" <> ref }
   }
 }
