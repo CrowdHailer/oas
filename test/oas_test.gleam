@@ -11,11 +11,11 @@ pub fn main() {
 }
 
 fn parse(data) {
-  json.decode(data, oas.decoder)
+  json.parse(data, oas.decoder())
 }
 
 fn decode_components(data) {
-  json.decode(data, oas.components_decoder)
+  json.parse(data, oas.components_decoder())
 }
 
 pub fn minimal_doc_test() {
@@ -70,9 +70,9 @@ fn parse_paths(data) {
       \"tags\": null,
       \"externalDocs\": null
     }"
-  use oas.Document(paths: paths, ..) <- result.try(json.decode(
+  use oas.Document(paths: paths, ..) <- result.try(json.parse(
     data,
-    oas.decoder,
+    oas.decoder(),
   ))
   Ok(paths)
 }
