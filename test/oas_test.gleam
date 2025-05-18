@@ -1,6 +1,7 @@
 import gleam/dict
 import gleam/dynamic/decode
 import gleam/json
+import gleam/option.{None}
 import gleam/result
 import gleeunit
 import gleeunit/should
@@ -134,4 +135,27 @@ pub fn invalid_object_schema_test() {
       ]),
     ),
   )
+}
+
+pub fn array_with_null_test() {
+  let data =
+    "{
+      \"schemas\": {
+        \"thing\": {
+          \"type\": [\"string\", \"null\"]
+        }
+      }
+    }"
+
+  data
+  |> decode_components
+  |> should.be_ok
+  |> should.equal(oas.Components(
+    dict.from_list([
+      #("thing", oas.String(None, None, None, None, True, None, None, False)),
+    ]),
+    dict.new(),
+    dict.new(),
+    dict.new(),
+  ))
 }

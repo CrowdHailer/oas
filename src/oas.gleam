@@ -327,7 +327,7 @@ fn parameter_decoder() {
     _ ->
       decode.failure(
         PathParameter("", Inline(Null(None, None, False))),
-        "valid in field",
+        "expected valid \"in\" field",
       )
   }
 }
@@ -542,28 +542,23 @@ fn schema_decoder() {
   use <- decode.recursive()
   decode.one_of(
     {
-      use type_ <- decode.field("type", decode.string)
-      echo "todo handle nullable iin list"
-      // use #(type_, decode_nullable) <- try({
-      //   case decode.string(field) {
-      //     Ok(type_) -> Ok(#(type_, decode_nullable))
-      //     Error(_) ->
-      //       case decode.list(decode.string)(field) {
-      //         Ok(["null", type_]) | Ok([type_, "null"]) ->
-      //           Ok(#(type_, fn(_) { Ok(True) }))
-      //         Ok([type_]) -> Ok(#(type_, decode_nullable))
-      //         Ok(_) ->
-      //           Error([
-      //             dynamic.DecodeError(
-      //               "Expected a string or list of strings",
-      //               dynamic.classify(field),
-      //               [],
-      //             ),
-      //           ])
-      //         Error(reason) -> Error(reason)
-      //       }
-      //   }
-      // })
+      use #(type_, decode_nullable) <- decode.field(
+        "type",
+        decode.one_of(
+          decode.string |> decode.map(fn(type_) { #(type_, decode_nullable) }),
+          [
+            decode.list(decode.string)
+            |> decode.then(fn(types) {
+              case types {
+                [type_] -> decode.success(#(type_, decode_nullable))
+                ["null", type_] | [type_, "null"] ->
+                  decode.success(#(type_, decode.then(decode.success(True), _)))
+                _ -> decode.failure(#("null", decode_nullable), "Type")
+              }
+            }),
+          ],
+        ),
+      )
       case type_ {
         "boolean" -> {
           use nullable <- decode_nullable
