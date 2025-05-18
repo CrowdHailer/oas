@@ -1,6 +1,7 @@
 import gleam/dict
-import gleam/dynamic
+import gleam/dynamic/decode
 import gleam/json
+import gleam/option.{None}
 import gleam/result
 import gleeunit
 import gleeunit/should
@@ -11,11 +12,11 @@ pub fn main() {
 }
 
 fn parse(data) {
-  json.decode(data, oas.decoder)
+  json.parse(data, oas.decoder())
 }
 
 fn decode_components(data) {
-  json.decode(data, oas.components_decoder)
+  json.parse(data, oas.components_decoder())
 }
 
 pub fn minimal_doc_test() {
@@ -70,9 +71,9 @@ fn parse_paths(data) {
       \"tags\": null,
       \"externalDocs\": null
     }"
-  use oas.Document(paths: paths, ..) <- result.try(json.decode(
+  use oas.Document(paths: paths, ..) <- result.try(json.parse(
     data,
-    oas.decoder,
+    oas.decoder(),
   ))
   Ok(paths)
 }
@@ -127,11 +128,54 @@ pub fn invalid_object_schema_test() {
   |> decode_components
   |> should.equal(
     Error(
-      json.UnexpectedFormat([
-        dynamic.DecodeError(expected: "another type", found: "Object", path: [
-          "schemas", "thing",
+      json.UnableToDecode([
+        decode.DecodeError(expected: "Field", found: "Nothing", path: [
+          "schemas", "values", "type",
         ]),
+        decode.DecodeError("Json data type", "Object", ["schemas", "values"]),
       ]),
     ),
   )
+}
+
+pub fn array_with_null_test() {
+  let data =
+    "{
+      \"schemas\": {
+        \"thing\": {
+          \"type\": [\"string\", \"null\"]
+        }
+      }
+    }"
+
+  data
+  |> decode_components
+  |> should.be_ok
+  |> should.equal(oas.Components(
+    dict.from_list([
+      #("thing", oas.String(None, None, None, None, True, None, None, False)),
+    ]),
+    dict.new(),
+    dict.new(),
+    dict.new(),
+  ))
+}
+
+pub fn allway_passes_test() {
+  let data =
+    "{
+      \"schemas\": {
+        \"thing\": true
+      }
+    }"
+
+  data
+  |> decode_components
+  |> should.be_ok
+  |> should.equal(oas.Components(
+    dict.from_list([#("thing", oas.AlwaysPasses)]),
+    dict.new(),
+    dict.new(),
+    dict.new(),
+  ))
 }
