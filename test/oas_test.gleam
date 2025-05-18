@@ -159,3 +159,22 @@ pub fn array_with_null_test() {
     dict.new(),
   ))
 }
+
+pub fn allway_passes_test() {
+  let data =
+    "{
+      \"schemas\": {
+        \"thing\": true
+      }
+    }"
+
+  data
+  |> decode_components
+  |> should.be_ok
+  |> should.equal(oas.Components(
+    dict.from_list([#("thing", oas.AlwaysPasses)]),
+    dict.new(),
+    dict.new(),
+    dict.new(),
+  ))
+}

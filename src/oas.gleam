@@ -694,28 +694,11 @@ fn schema_decoder() {
       }
     },
     [
-      // decode.field(
-      //   "allOf",
-      //   decode.list(ref_decoder(decode.then(properties_decoder(, _)))
-      //     |> decode.map(AllOf),
-      //   decode.success,
-      // ),
-      {
-        use x <- decode.field(
-          "allOf",
-          decode.list(
-            ref_decoder({
-              use p <- default_field(
-                "properties",
-                dictionary_decoder(ref_decoder(schema_decoder())),
-                dict.new(),
-              )
-              decode.success(p)
-            }),
-          ),
-        )
-        decode.success(AllOf(x))
-      },
+      decode.field(
+        "allOf",
+        decode.list(ref_decoder(properties_decoder())) |> decode.map(AllOf),
+        decode.success,
+      ),
       decode.field(
         "anyOf",
         decode.list(ref_decoder(schema_decoder())) |> decode.map(AnyOf),
@@ -726,23 +709,20 @@ fn schema_decoder() {
         decode.list(ref_decoder(schema_decoder())) |> decode.map(OneOf),
         decode.success,
       ),
-      // fn(raw) {
-    //   case decode.bool(raw) {
-    //     Ok(True) -> Ok(AlwaysPasses)
-    //     Ok(False) -> Ok(AlwaysFails)
-    //     Error(reason) -> Error(reason)
-    //   }
-    // },
-    // fn(raw) {
-    //   case decode.dict(decode.string, decode.string)(raw) {
-    //     Ok(out) ->
-    //       case out == dict.new() {
-    //         True -> Ok(AlwaysPasses)
-    //         False -> Ok(AlwaysFails)
-    //       }
-    //     Error(reason) -> Error(reason)
-    //   }
-    // },
+      decode.bool
+        |> decode.map(fn(b) {
+          case b {
+            True -> AlwaysPasses
+            False -> AlwaysFails
+          }
+        }),
+      decode.dict(decode.string, decode.string)
+        |> decode.map(fn(d) {
+          case d == dict.new() {
+            True -> AlwaysPasses
+            False -> AlwaysFails
+          }
+        }),
     ],
   )
 }
