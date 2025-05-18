@@ -529,12 +529,12 @@ fn dictionary_decoder(value_decoder) {
   decode.dict(decode.string, value_decoder)
 }
 
-fn decode_properties(k) {
+fn properties_decoder() {
   default_field(
     "properties",
     dictionary_decoder(ref_decoder(schema_decoder())),
     dict.new(),
-    k,
+    decode.success,
   )
 }
 
@@ -542,18 +542,19 @@ fn schema_decoder() {
   use <- decode.recursive()
   decode.one_of(
     {
-      use #(type_, decode_nullable) <- decode.field(
+      use #(type_, nullable_decoder) <- decode.field(
         "type",
         decode.one_of(
-          decode.string |> decode.map(fn(type_) { #(type_, decode_nullable) }),
+          decode.string
+            |> decode.map(fn(type_) { #(type_, nullable_decoder()) }),
           [
             decode.list(decode.string)
             |> decode.then(fn(types) {
               case types {
-                [type_] -> decode.success(#(type_, decode_nullable))
+                [type_] -> decode.success(#(type_, nullable_decoder()))
                 ["null", type_] | [type_, "null"] ->
-                  decode.success(#(type_, decode.then(decode.success(True), _)))
-                _ -> decode.failure(#("null", decode_nullable), "Type")
+                  decode.success(#(type_, decode.success(True)))
+                _ -> decode.failure(#("null", nullable_decoder()), "Type")
               }
             }),
           ],
@@ -561,10 +562,10 @@ fn schema_decoder() {
       )
       case type_ {
         "boolean" -> {
-          use nullable <- decode_nullable
-          use title <- decode_title
-          use description <- decode_description
-          use deprecated <- decode_deprecated
+          use nullable <- decode.then(nullable_decoder)
+          use title <- decode.then(title_decoder())
+          use description <- decode.then(description_decoder())
+          use deprecated <- decode.then(deprecated_decoder())
           decode.success(Boolean(nullable, title, description, deprecated))
         }
         "integer" -> {
@@ -579,10 +580,10 @@ fn schema_decoder() {
             "exclusiveMinimum",
             decode.int,
           )
-          use nullable <- decode_nullable
-          use title <- decode_title
-          use description <- decode_description
-          use deprecated <- decode_deprecated
+          use nullable <- decode.then(nullable_decoder)
+          use title <- decode.then(title_decoder())
+          use description <- decode.then(description_decoder())
+          use deprecated <- decode.then(deprecated_decoder())
           decode.success(Integer(
             multiple_of,
             maximum,
@@ -607,10 +608,10 @@ fn schema_decoder() {
             "exclusiveMinimum",
             decode.int,
           )
-          use nullable <- decode_nullable
-          use title <- decode_title
-          use description <- decode_description
-          use deprecated <- decode_deprecated
+          use nullable <- decode.then(nullable_decoder)
+          use title <- decode.then(title_decoder())
+          use description <- decode.then(description_decoder())
+          use deprecated <- decode.then(deprecated_decoder())
           decode.success(Number(
             multiple_of,
             maximum,
@@ -629,10 +630,10 @@ fn schema_decoder() {
           use min_length <- optional_field("minLength", decode.int)
           use pattern <- optional_field("pattern", decode.string)
           use format <- optional_field("format", decode.string)
-          use nullable <- decode_nullable
-          use title <- decode_title
-          use description <- decode_description
-          use deprecated <- decode_deprecated
+          use nullable <- decode.then(nullable_decoder)
+          use title <- decode.then(title_decoder())
+          use description <- decode.then(description_decoder())
+          use deprecated <- decode.then(deprecated_decoder())
           decode.success(String(
             max_length,
             min_length,
@@ -646,9 +647,9 @@ fn schema_decoder() {
         }
 
         "null" -> {
-          use title <- decode_title
-          use description <- decode_description
-          use deprecated <- decode_deprecated
+          use title <- decode.then(title_decoder())
+          use description <- decode.then(description_decoder())
+          use deprecated <- decode.then(deprecated_decoder())
           decode.success(Null(title, description, deprecated))
         }
         "array" -> {
@@ -657,10 +658,10 @@ fn schema_decoder() {
             use min_items <- optional_field("minItems", decode.int)
             use unique_items <- default_field("uniqueItems", decode.bool, False)
             use items <- decode.field("items", ref_decoder(schema_decoder()))
-            use nullable <- decode_nullable
-            use title <- decode_title
-            use description <- decode_description
-            use deprecated <- decode_deprecated
+            use nullable <- decode.then(nullable_decoder)
+            use title <- decode.then(title_decoder())
+            use description <- decode.then(description_decoder())
+            use deprecated <- decode.then(deprecated_decoder())
             decode.success(Array(
               max_items,
               min_items,
@@ -674,12 +675,12 @@ fn schema_decoder() {
           }
         }
         "object" -> {
-          use properties <- decode_properties
-          use required <- decode_required
-          use nullable <- decode_nullable
-          use title <- decode_title
-          use description <- decode_description
-          use deprecated <- decode_deprecated
+          use properties <- decode.then(properties_decoder())
+          use required <- decode.then(required_decoder())
+          use nullable <- decode.then(nullable_decoder)
+          use title <- decode.then(title_decoder())
+          use description <- decode.then(description_decoder())
+          use deprecated <- decode.then(deprecated_decoder())
           decode.success(Object(
             properties,
             required,
@@ -693,6 +694,12 @@ fn schema_decoder() {
       }
     },
     [
+      // decode.field(
+      //   "allOf",
+      //   decode.list(ref_decoder(decode.then(properties_decoder(, _)))
+      //     |> decode.map(AllOf),
+      //   decode.success,
+      // ),
       {
         use x <- decode.field(
           "allOf",
@@ -709,15 +716,17 @@ fn schema_decoder() {
         )
         decode.success(AllOf(x))
       },
-      // decode.field(
-    //   "anyOf",
-    //   dynamic.decode1(AnyOf, decode.list(ref_decoder(schema_decoder))),
-    // ),
-    // decode.field(
-    //   "oneOf",
-    //   dynamic.decode1(OneOf, decode.list(ref_decoder(schema_decoder))),
-    // ),
-    // fn(raw) {
+      decode.field(
+        "anyOf",
+        decode.list(ref_decoder(schema_decoder())) |> decode.map(AnyOf),
+        decode.success,
+      ),
+      decode.field(
+        "oneOf",
+        decode.list(ref_decoder(schema_decoder())) |> decode.map(OneOf),
+        decode.success,
+      ),
+      // fn(raw) {
     //   case decode.bool(raw) {
     //     Ok(True) -> Ok(AlwaysPasses)
     //     Ok(False) -> Ok(AlwaysFails)
@@ -738,24 +747,24 @@ fn schema_decoder() {
   )
 }
 
-fn decode_required(k) {
-  default_field("required", decode.list(decode.string), [], k)
+fn required_decoder() {
+  default_field("required", decode.list(decode.string), [], decode.success)
 }
 
-fn decode_nullable(k) {
-  default_field("nullable", decode.bool, False, k)
+fn nullable_decoder() {
+  default_field("nullable", decode.bool, False, decode.success)
 }
 
-fn decode_title(k) {
-  optional_field("title", decode.string, k)
+fn title_decoder() {
+  optional_field("title", decode.string, decode.success)
 }
 
-fn decode_description(k) {
-  optional_field("description", decode.string, k)
+fn description_decoder() {
+  optional_field("description", decode.string, decode.success)
 }
 
-fn decode_deprecated(k) {
-  default_field("deprecated", decode.bool, False, k)
+fn deprecated_decoder() {
+  default_field("deprecated", decode.bool, False, decode.success)
 }
 
 // --------------------------------------------------------------------
