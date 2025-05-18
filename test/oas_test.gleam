@@ -130,8 +130,9 @@ pub fn invalid_object_schema_test() {
     Error(
       json.UnableToDecode([
         decode.DecodeError(expected: "Field", found: "Nothing", path: [
-          "schemas", "thing",
+          "schemas", "values", "type",
         ]),
+        decode.DecodeError("Json data type", "Object", ["schemas", "values"]),
       ]),
     ),
   )

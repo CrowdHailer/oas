@@ -246,7 +246,7 @@ pub type Components {
 pub fn components_decoder() {
   use schemas <- default_field(
     "schemas",
-    dictionary_decoder(schema_decoder()),
+    decode.dict(decode.string, schema_decoder()),
     dict.new(),
   )
   use responses <- default_field(
@@ -426,7 +426,7 @@ fn response_decoder() {
   use description <- optional_field("description", decode.string)
   use headers <- default_field(
     "headers",
-    decode.dict(decode.string, ref_decoder(decode_header())),
+    decode.dict(decode.string, ref_decoder(header_decoder())),
     dict.new(),
   )
   use content <- default_field("content", content_decoder(), dict.new())
@@ -437,7 +437,7 @@ pub type Header {
   Header(description: Option(String), required: Bool, schema: Schema)
 }
 
-fn decode_header() {
+fn header_decoder() {
   use description <- optional_field("description", decode.string)
   use required <- default_field("required", decode.bool, False)
   use schema <- decode.field("schema", schema_decoder())
@@ -525,14 +525,10 @@ pub type Schema {
   AlwaysFails
 }
 
-fn dictionary_decoder(value_decoder) {
-  decode.dict(decode.string, value_decoder)
-}
-
 fn properties_decoder() {
   default_field(
     "properties",
-    dictionary_decoder(ref_decoder(schema_decoder())),
+    decode.dict(decode.string, ref_decoder(schema_decoder())),
     dict.new(),
     decode.success,
   )
