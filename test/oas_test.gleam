@@ -1,5 +1,5 @@
 import gleam/dict
-import gleam/dynamic
+import gleam/dynamic/decode
 import gleam/json
 import gleam/result
 import gleeunit
@@ -127,8 +127,8 @@ pub fn invalid_object_schema_test() {
   |> decode_components
   |> should.equal(
     Error(
-      json.UnexpectedFormat([
-        dynamic.DecodeError(expected: "another type", found: "Object", path: [
+      json.UnableToDecode([
+        decode.DecodeError(expected: "Field", found: "Nothing", path: [
           "schemas", "thing",
         ]),
       ]),

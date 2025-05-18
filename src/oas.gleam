@@ -1,22 +1,24 @@
 import gleam/dict.{type Dict}
-import gleam/dynamic
 import gleam/dynamic/decode
 import gleam/http
 import gleam/int
-import gleam/io
 import gleam/list
-import gleam/option.{type Option, None, Some}
+import gleam/option.{type Option, None}
 import gleam/pair
-import gleam/result
 import gleam/string
 import gleam/uri.{Uri}
 
 fn default_field(key, decoder, default, k) {
-  decode.optional_field(key, default, decoder, k)
+  decode.optional_field(
+    key,
+    default,
+    decode.optional(decoder) |> decode.map(option.unwrap(_, or: default)),
+    k,
+  )
 }
 
 fn optional_field(key, decoder, k) {
-  decode.optional_field(key, None, decode.map(decoder, Some), k)
+  decode.optional_field(key, None, decode.optional(decoder), k)
 }
 
 /// This is the root object of the OpenAPI document.
@@ -181,7 +183,6 @@ fn paths_decoder() {
 }
 
 fn path_decoder() {
-  echo Nil
   use summary <- optional_field("summary", decode.string)
   use description <- optional_field("description", decode.string)
   use parameters <- default_field(
