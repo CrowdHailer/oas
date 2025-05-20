@@ -5,8 +5,7 @@ import gleam/int
 import gleam/list
 import gleam/option.{type Option, None}
 import gleam/pair
-import gleam/string
-import gleam/uri.{Uri}
+import oas/path_template
 
 fn default_field(key, decoder, default, k) {
   decode.optional_field(
@@ -770,13 +769,11 @@ pub fn query_parameters(parameters) {
 }
 
 pub fn gather_match(pattern, parameters, components: Components) {
-  case uri.parse(pattern) {
-    Ok(Uri(path: "/" <> pattern, ..)) -> {
-      string.split(pattern, "/")
-      |> list.try_map(fn(segment) {
+  case path_template.parse(pattern) {
+    Ok(segments) -> {
+      list.try_map(segments, fn(segment) {
         case segment {
-          "{" <> rest -> {
-            let label = string.drop_end(rest, 1)
+          path_template.Variable(label) -> {
             case get_parameter(parameters, label) {
               Ok(PathParameter(schema: schema, ..)) -> {
                 let schema = fetch_schema(schema, components.schemas)
@@ -785,7 +782,7 @@ pub fn gather_match(pattern, parameters, components: Components) {
               _ -> Error("Don't have a matching parameter for: " <> label)
             }
           }
-          name -> Ok(FixedSegment(name))
+          path_template.Fixed(name) -> Ok(FixedSegment(name))
         }
       })
     }
