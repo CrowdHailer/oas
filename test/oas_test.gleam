@@ -179,3 +179,27 @@ pub fn allway_passes_test() {
     dict.new(),
   ))
 }
+
+pub fn empty_all_of_test() {
+  let data =
+    "{
+      \"schemas\": {
+        \"thing\": {
+          \"allOf\": []
+        }
+      }
+    }"
+
+  data
+  |> decode_components
+  |> should.equal(
+    Error(
+      json.UnableToDecode([
+        decode.DecodeError(expected: "Field", found: "Nothing", path: [
+          "schemas", "values", "type",
+        ]),
+        decode.DecodeError("Json data type", "Object", ["schemas", "values"]),
+      ]),
+    ),
+  )
+}

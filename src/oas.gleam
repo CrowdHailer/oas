@@ -5,6 +5,7 @@ import gleam/int
 import gleam/list
 import gleam/option.{type Option, None}
 import gleam/pair
+import non_empty_list.{type NonEmptyList, NonEmptyList}
 import oas/path_template
 
 fn default_field(key, decoder, default, k) {
@@ -517,9 +518,9 @@ pub type Schema {
     description: Option(String),
     deprecated: Bool,
   )
-  AllOf(List(Ref(Dict(String, Ref(Schema)))))
-  AnyOf(List(Ref(Schema)))
-  OneOf(List(Ref(Schema)))
+  AllOf(NonEmptyList(Ref(Schema)))
+  AnyOf(NonEmptyList(Ref(Schema)))
+  OneOf(NonEmptyList(Ref(Schema)))
   AlwaysPasses
   AlwaysFails
 }
@@ -691,17 +692,17 @@ fn schema_decoder() {
     [
       decode.field(
         "allOf",
-        decode.list(ref_decoder(properties_decoder())) |> decode.map(AllOf),
+        non_empty_list_of_schema_decoder() |> decode.map(AllOf),
         decode.success,
       ),
       decode.field(
         "anyOf",
-        decode.list(ref_decoder(schema_decoder())) |> decode.map(AnyOf),
+        non_empty_list_of_schema_decoder() |> decode.map(AnyOf),
         decode.success,
       ),
       decode.field(
         "oneOf",
-        decode.list(ref_decoder(schema_decoder())) |> decode.map(OneOf),
+        non_empty_list_of_schema_decoder() |> decode.map(OneOf),
         decode.success,
       ),
       decode.bool
@@ -720,6 +721,14 @@ fn schema_decoder() {
         }),
     ],
   )
+}
+
+fn non_empty_list_of_schema_decoder() {
+  use list <- decode.then(decode.list(ref_decoder(schema_decoder())))
+  case list {
+    [] -> decode.failure(NonEmptyList(Inline(AlwaysFails), []), "")
+    [a, ..rest] -> decode.success(NonEmptyList(a, rest))
+  }
 }
 
 fn required_decoder() {
