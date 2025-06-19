@@ -129,7 +129,7 @@ pub fn invalid_object_schema_test() {
   |> should.equal(
     Error(
       json.UnableToDecode([
-        decode.DecodeError("Schema object", "Object", ["schemas", "values"]),
+        decode.DecodeError("Discriminator", "Object", ["schemas", "values"]),
       ]),
     ),
   )
@@ -192,7 +192,7 @@ pub fn empty_all_of_test() {
   |> should.equal(
     Error(
       json.UnableToDecode([
-        decode.DecodeError("Schema object", "Object", ["schemas", "values"]),
+        decode.DecodeError("Discriminator", "Object", ["schemas", "values"]),
       ]),
     ),
   )

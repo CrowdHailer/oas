@@ -3,9 +3,10 @@ import gleam/dynamic/decode
 import gleam/http
 import gleam/int
 import gleam/list
-import gleam/option.{type Option, None, Some}
+import gleam/option.{type Option, None}
 import gleam/pair
 import non_empty_list.{type NonEmptyList, NonEmptyList}
+import oas/decodex
 import oas/path_template
 
 fn default_field(key, decoder, default, k) {
@@ -537,175 +538,192 @@ fn properties_decoder() {
   )
 }
 
+fn type_decoder() {
+  decode.one_of(
+    decode.string
+      |> decode.map(fn(type_) { #(type_, nullable_decoder()) }),
+    [
+      decode.list(decode.string)
+      |> decode.then(fn(types) {
+        case types {
+          [type_] -> decode.success(#(type_, nullable_decoder()))
+          ["null", type_] | [type_, "null"] ->
+            decode.success(#(type_, decode.success(True)))
+          _ -> decode.failure(#("", nullable_decoder()), "Type")
+        }
+      }),
+    ],
+  )
+}
+
 fn schema_decoder() {
   use <- decode.recursive()
   decode.one_of(
     {
-      use #(type_, nullable_decoder) <- decode.optional_field(
+      use #(type_, nullable_decoder) <- decodex.discriminate(
         "type",
-        #(None, nullable_decoder()),
-        decode.one_of(
-          decode.string
-            |> decode.map(fn(type_) { #(Some(type_), nullable_decoder()) }),
-          [
-            decode.list(decode.string)
-            |> decode.then(fn(types) {
-              case types {
-                [type_] -> decode.success(#(Some(type_), nullable_decoder()))
-                ["null", type_] | [type_, "null"] ->
-                  decode.success(#(Some(type_), decode.success(True)))
-                _ -> decode.failure(#(None, nullable_decoder()), "Type")
-              }
-            }),
-          ],
-        ),
+        type_decoder(),
+        Null(None, None, False),
       )
       case type_ {
-        Some("boolean") -> {
-          use nullable <- decode.then(nullable_decoder)
-          use title <- decode.then(title_decoder())
-          use description <- decode.then(description_decoder())
-          use deprecated <- decode.then(deprecated_decoder())
-          decode.success(Boolean(nullable, title, description, deprecated))
-        }
-        Some("integer") -> {
-          use multiple_of <- optional_field("multipleOf", decode.int)
-          use maximum <- optional_field("maximum", decode.int)
-          use exclusive_maximum <- optional_field(
-            "exclusiveMaximum",
-            decode.int,
-          )
-          use minimum <- optional_field("minimum", decode.int)
-          use exclusive_minimum <- optional_field(
-            "exclusiveMinimum",
-            decode.int,
-          )
-          use nullable <- decode.then(nullable_decoder)
-          use title <- decode.then(title_decoder())
-          use description <- decode.then(description_decoder())
-          use deprecated <- decode.then(deprecated_decoder())
-          decode.success(Integer(
-            multiple_of,
-            maximum,
-            exclusive_maximum,
-            minimum,
-            exclusive_minimum,
-            nullable,
-            title,
-            description,
-            deprecated,
-          ))
-        }
-        Some("number") -> {
-          use multiple_of <- optional_field("multipleOf", decode.int)
-          use maximum <- optional_field("maximum", decode.int)
-          use exclusive_maximum <- optional_field(
-            "exclusiveMaximum",
-            decode.int,
-          )
-          use minimum <- optional_field("minimum", decode.int)
-          use exclusive_minimum <- optional_field(
-            "exclusiveMinimum",
-            decode.int,
-          )
-          use nullable <- decode.then(nullable_decoder)
-          use title <- decode.then(title_decoder())
-          use description <- decode.then(description_decoder())
-          use deprecated <- decode.then(deprecated_decoder())
-          decode.success(Number(
-            multiple_of,
-            maximum,
-            exclusive_maximum,
-            minimum,
-            exclusive_minimum,
-            nullable,
-            title,
-            description,
-            deprecated,
-          ))
-        }
-
-        Some("string") -> {
-          use max_length <- optional_field("maxLength", decode.int)
-          use min_length <- optional_field("minLength", decode.int)
-          use pattern <- optional_field("pattern", decode.string)
-          use format <- optional_field("format", decode.string)
-          use nullable <- decode.then(nullable_decoder)
-          use title <- decode.then(title_decoder())
-          use description <- decode.then(description_decoder())
-          use deprecated <- decode.then(deprecated_decoder())
-          decode.success(String(
-            max_length,
-            min_length,
-            pattern,
-            format,
-            nullable,
-            title,
-            description,
-            deprecated,
-          ))
-        }
-
-        Some("null") -> {
-          use title <- decode.then(title_decoder())
-          use description <- decode.then(description_decoder())
-          use deprecated <- decode.then(deprecated_decoder())
-          decode.success(Null(title, description, deprecated))
-        }
-        Some("array") -> {
+        "boolean" ->
           {
-            use max_items <- optional_field("maxItems", decode.int)
-            use min_items <- optional_field("minItems", decode.int)
-            use unique_items <- default_field("uniqueItems", decode.bool, False)
-            use items <- decode.field("items", ref_decoder(schema_decoder()))
             use nullable <- decode.then(nullable_decoder)
             use title <- decode.then(title_decoder())
             use description <- decode.then(description_decoder())
             use deprecated <- decode.then(deprecated_decoder())
-            decode.success(Array(
-              max_items,
-              min_items,
-              unique_items,
-              items,
+            decode.success(Boolean(nullable, title, description, deprecated))
+          }
+          |> Ok
+        "integer" ->
+          {
+            use multiple_of <- optional_field("multipleOf", decode.int)
+            use maximum <- optional_field("maximum", decode.int)
+            use exclusive_maximum <- optional_field(
+              "exclusiveMaximum",
+              decode.int,
+            )
+            use minimum <- optional_field("minimum", decode.int)
+            use exclusive_minimum <- optional_field(
+              "exclusiveMinimum",
+              decode.int,
+            )
+            use nullable <- decode.then(nullable_decoder)
+            use title <- decode.then(title_decoder())
+            use description <- decode.then(description_decoder())
+            use deprecated <- decode.then(deprecated_decoder())
+            decode.success(Integer(
+              multiple_of,
+              maximum,
+              exclusive_maximum,
+              minimum,
+              exclusive_minimum,
               nullable,
               title,
               description,
               deprecated,
             ))
           }
-        }
-        Some("object") -> {
-          use properties <- decode.then(properties_decoder())
-          use required <- decode.then(required_decoder())
-          use additional_properties <- optional_field(
-            "additionalProperties",
-            ref_decoder(schema_decoder()),
-          )
-          use max_properties <- optional_field("maxProperties", decode.int)
-          // "Omitting this keyword has the same behavior as a value of 0"
-          use min_properties <- default_field("minProperties", decode.int, 0)
-          use nullable <- decode.then(nullable_decoder)
-          use title <- decode.then(title_decoder())
-          use description <- decode.then(description_decoder())
-          use deprecated <- decode.then(deprecated_decoder())
-          decode.success(Object(
-            properties,
-            required,
-            additional_properties,
-            max_properties,
-            min_properties,
-            nullable,
-            title,
-            description,
-            deprecated,
-          ))
-        }
-        Some(type_) ->
-          decode.failure(
-            Null(None, None, False),
-            "valid schema type got: " <> type_,
-          )
-        _ -> decode.failure(Null(None, None, False), "Schema object")
+          |> Ok
+        "number" ->
+          {
+            use multiple_of <- optional_field("multipleOf", decode.int)
+            use maximum <- optional_field("maximum", decode.int)
+            use exclusive_maximum <- optional_field(
+              "exclusiveMaximum",
+              decode.int,
+            )
+            use minimum <- optional_field("minimum", decode.int)
+            use exclusive_minimum <- optional_field(
+              "exclusiveMinimum",
+              decode.int,
+            )
+            use nullable <- decode.then(nullable_decoder)
+            use title <- decode.then(title_decoder())
+            use description <- decode.then(description_decoder())
+            use deprecated <- decode.then(deprecated_decoder())
+            decode.success(Number(
+              multiple_of,
+              maximum,
+              exclusive_maximum,
+              minimum,
+              exclusive_minimum,
+              nullable,
+              title,
+              description,
+              deprecated,
+            ))
+          }
+          |> Ok
+
+        "string" ->
+          {
+            use max_length <- optional_field("maxLength", decode.int)
+            use min_length <- optional_field("minLength", decode.int)
+            use pattern <- optional_field("pattern", decode.string)
+            use format <- optional_field("format", decode.string)
+            use nullable <- decode.then(nullable_decoder)
+            use title <- decode.then(title_decoder())
+            use description <- decode.then(description_decoder())
+            use deprecated <- decode.then(deprecated_decoder())
+            decode.success(String(
+              max_length,
+              min_length,
+              pattern,
+              format,
+              nullable,
+              title,
+              description,
+              deprecated,
+            ))
+          }
+          |> Ok
+
+        "null" ->
+          {
+            use title <- decode.then(title_decoder())
+            use description <- decode.then(description_decoder())
+            use deprecated <- decode.then(deprecated_decoder())
+            decode.success(Null(title, description, deprecated))
+          }
+          |> Ok
+        "array" ->
+          {
+            {
+              use max_items <- optional_field("maxItems", decode.int)
+              use min_items <- optional_field("minItems", decode.int)
+              use unique_items <- default_field(
+                "uniqueItems",
+                decode.bool,
+                False,
+              )
+              use items <- decode.field("items", ref_decoder(schema_decoder()))
+              use nullable <- decode.then(nullable_decoder)
+              use title <- decode.then(title_decoder())
+              use description <- decode.then(description_decoder())
+              use deprecated <- decode.then(deprecated_decoder())
+              decode.success(Array(
+                max_items,
+                min_items,
+                unique_items,
+                items,
+                nullable,
+                title,
+                description,
+                deprecated,
+              ))
+            }
+          }
+          |> Ok
+        "object" ->
+          {
+            use properties <- decode.then(properties_decoder())
+            use required <- decode.then(required_decoder())
+            use additional_properties <- optional_field(
+              "additionalProperties",
+              ref_decoder(schema_decoder()),
+            )
+            use max_properties <- optional_field("maxProperties", decode.int)
+            // "Omitting this keyword has the same behavior as a value of 0"
+            use min_properties <- default_field("minProperties", decode.int, 0)
+            use nullable <- decode.then(nullable_decoder)
+            use title <- decode.then(title_decoder())
+            use description <- decode.then(description_decoder())
+            use deprecated <- decode.then(deprecated_decoder())
+            decode.success(Object(
+              properties,
+              required,
+              additional_properties,
+              max_properties,
+              min_properties,
+              nullable,
+              title,
+              description,
+              deprecated,
+            ))
+          }
+          |> Ok
+        type_ -> Error("valid schema type got: " <> type_)
       }
     },
     [
