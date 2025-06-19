@@ -3,7 +3,7 @@ import gleam/dynamic/decode
 import gleam/http
 import gleam/int
 import gleam/list
-import gleam/option.{type Option, None}
+import gleam/option.{type Option, None, Some}
 import gleam/pair
 import non_empty_list.{type NonEmptyList, NonEmptyList}
 import oas/path_template
@@ -541,33 +541,34 @@ fn schema_decoder() {
   use <- decode.recursive()
   decode.one_of(
     {
-      use #(type_, nullable_decoder) <- decode.field(
+      use #(type_, nullable_decoder) <- decode.optional_field(
         "type",
+        #(None, nullable_decoder()),
         decode.one_of(
           decode.string
-            |> decode.map(fn(type_) { #(type_, nullable_decoder()) }),
+            |> decode.map(fn(type_) { #(Some(type_), nullable_decoder()) }),
           [
             decode.list(decode.string)
             |> decode.then(fn(types) {
               case types {
-                [type_] -> decode.success(#(type_, nullable_decoder()))
+                [type_] -> decode.success(#(Some(type_), nullable_decoder()))
                 ["null", type_] | [type_, "null"] ->
-                  decode.success(#(type_, decode.success(True)))
-                _ -> decode.failure(#("null", nullable_decoder()), "Type")
+                  decode.success(#(Some(type_), decode.success(True)))
+                _ -> decode.failure(#(None, nullable_decoder()), "Type")
               }
             }),
           ],
         ),
       )
       case type_ {
-        "boolean" -> {
+        Some("boolean") -> {
           use nullable <- decode.then(nullable_decoder)
           use title <- decode.then(title_decoder())
           use description <- decode.then(description_decoder())
           use deprecated <- decode.then(deprecated_decoder())
           decode.success(Boolean(nullable, title, description, deprecated))
         }
-        "integer" -> {
+        Some("integer") -> {
           use multiple_of <- optional_field("multipleOf", decode.int)
           use maximum <- optional_field("maximum", decode.int)
           use exclusive_maximum <- optional_field(
@@ -595,7 +596,7 @@ fn schema_decoder() {
             deprecated,
           ))
         }
-        "number" -> {
+        Some("number") -> {
           use multiple_of <- optional_field("multipleOf", decode.int)
           use maximum <- optional_field("maximum", decode.int)
           use exclusive_maximum <- optional_field(
@@ -624,7 +625,7 @@ fn schema_decoder() {
           ))
         }
 
-        "string" -> {
+        Some("string") -> {
           use max_length <- optional_field("maxLength", decode.int)
           use min_length <- optional_field("minLength", decode.int)
           use pattern <- optional_field("pattern", decode.string)
@@ -645,13 +646,13 @@ fn schema_decoder() {
           ))
         }
 
-        "null" -> {
+        Some("null") -> {
           use title <- decode.then(title_decoder())
           use description <- decode.then(description_decoder())
           use deprecated <- decode.then(deprecated_decoder())
           decode.success(Null(title, description, deprecated))
         }
-        "array" -> {
+        Some("array") -> {
           {
             use max_items <- optional_field("maxItems", decode.int)
             use min_items <- optional_field("minItems", decode.int)
@@ -673,7 +674,7 @@ fn schema_decoder() {
             ))
           }
         }
-        "object" -> {
+        Some("object") -> {
           use properties <- decode.then(properties_decoder())
           use required <- decode.then(required_decoder())
           use additional_properties <- optional_field(
@@ -699,7 +700,12 @@ fn schema_decoder() {
             deprecated,
           ))
         }
-        _ -> decode.failure(Null(None, None, False), "Json data type")
+        Some(type_) ->
+          decode.failure(
+            Null(None, None, False),
+            "valid schema type got: " <> type_,
+          )
+        _ -> decode.failure(Null(None, None, False), "Schema object")
       }
     },
     [

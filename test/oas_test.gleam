@@ -129,10 +129,7 @@ pub fn invalid_object_schema_test() {
   |> should.equal(
     Error(
       json.UnableToDecode([
-        decode.DecodeError(expected: "Field", found: "Nothing", path: [
-          "schemas", "values", "type",
-        ]),
-        decode.DecodeError("Json data type", "Object", ["schemas", "values"]),
+        decode.DecodeError("Schema object", "Object", ["schemas", "values"]),
       ]),
     ),
   )
@@ -195,10 +192,7 @@ pub fn empty_all_of_test() {
   |> should.equal(
     Error(
       json.UnableToDecode([
-        decode.DecodeError(expected: "Field", found: "Nothing", path: [
-          "schemas", "values", "type",
-        ]),
-        decode.DecodeError("Json data type", "Object", ["schemas", "values"]),
+        decode.DecodeError("Schema object", "Object", ["schemas", "values"]),
       ]),
     ),
   )
