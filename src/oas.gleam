@@ -456,7 +456,6 @@ fn media_type_decoder() {
 
 /// Represents a decoded JSON schema.
 /// 
-/// Chosen not to support additional properties
 /// Chosen to add metadata inline as it doesn't belong on ref object
 /// https://json-schema.org/draft/2020-12/json-schema-validation#name-a-vocabulary-for-basic-meta
 pub type Schema {
@@ -513,6 +512,10 @@ pub type Schema {
   Object(
     properties: Dict(String, Ref(Schema)),
     required: List(String),
+    additional_properties: Option(Ref(Schema)),
+    max_properties: Option(Int),
+    // "Omitting this keyword has the same behavior as a value of 0"
+    min_properties: Int,
     nullable: Bool,
     title: Option(String),
     description: Option(String),
@@ -673,6 +676,13 @@ fn schema_decoder() {
         "object" -> {
           use properties <- decode.then(properties_decoder())
           use required <- decode.then(required_decoder())
+          use additional_properties <- optional_field(
+            "additionalProperties",
+            ref_decoder(schema_decoder()),
+          )
+          use max_properties <- optional_field("maxProperties", decode.int)
+          // "Omitting this keyword has the same behavior as a value of 0"
+          use min_properties <- default_field("minProperties", decode.int, 0)
           use nullable <- decode.then(nullable_decoder)
           use title <- decode.then(title_decoder())
           use description <- decode.then(description_decoder())
@@ -680,6 +690,9 @@ fn schema_decoder() {
           decode.success(Object(
             properties,
             required,
+            additional_properties,
+            max_properties,
+            min_properties,
             nullable,
             title,
             description,
