@@ -80,6 +80,12 @@ A schema value of `false` is equivalent to a schema that will never validate.
 
 These "types" are decoded as `oas.AlwayPasses` and `oas.AlwaysFails` respectively.
 
+### Additional properties
+
+> Omitting this keyword has the same assertion behavior as an empty schema.
+
+So if this value is not set it is the same as having a value of always passes
+
 ## Credit
 
 Created for [EYG](https://eyg.run/), a new integration focused programming language.

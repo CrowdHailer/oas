@@ -156,14 +156,14 @@ fn server_decoder() {
 /// An object representing a Server Variable for server URL template substitution.
 pub type ServerVariable {
   ServerVariable(
-    enum: List(String),
+    enum: Option(NonEmptyList(String)),
     default: String,
     description: Option(String),
   )
 }
 
 fn server_variable_decoder() {
-  use enum <- decode.field("enum", decode.list(decode.string))
+  use enum <- optional_field("enum", non_empty_list_of_string_decoder())
   use default <- decode.field("default", decode.string)
   use description <- optional_field("description", decode.string)
   decode.success(ServerVariable(enum, default, description))
@@ -764,6 +764,15 @@ fn non_empty_list_of_schema_decoder() {
   use list <- decode.then(decode.list(ref_decoder(schema_decoder())))
   case list {
     [] -> decode.failure(NonEmptyList(Inline(AlwaysFails), []), "")
+    [a, ..rest] -> decode.success(NonEmptyList(a, rest))
+  }
+}
+
+// Is it possible to get the zero value from a decoder
+fn non_empty_list_of_string_decoder() {
+  use list <- decode.then(decode.list(decode.string))
+  case list {
+    [] -> decode.failure(NonEmptyList("", []), "")
     [a, ..rest] -> decode.success(NonEmptyList(a, rest))
   }
 }
