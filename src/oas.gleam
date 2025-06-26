@@ -447,11 +447,11 @@ fn header_decoder() {
 
 /// Each Media Type Object provides schema and examples for the media type identified by its key.
 pub type MediaType {
-  MediaType(schema: Ref(Schema))
+  MediaType(schema: Option(Ref(Schema)))
 }
 
 fn media_type_decoder() {
-  use schema <- decode.field("schema", ref_decoder(schema_decoder()))
+  use schema <- optional_field("schema", ref_decoder(schema_decoder()))
   decode.success(MediaType(schema))
 }
 

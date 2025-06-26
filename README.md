@@ -86,6 +86,10 @@ These "types" are decoded as `oas.AlwayPasses` and `oas.AlwaysFails` respectivel
 
 So if this value is not set it is the same as having a value of always passes
 
+### Schema field on MediaType
+
+> Content transferred in binary (octet-stream) MAY omit schema:
+
 ## Credit
 
 Created for [EYG](https://eyg.run/), a new integration focused programming language.
