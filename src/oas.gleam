@@ -2,6 +2,7 @@ import gleam/dict.{type Dict}
 import gleam/dynamic/decode
 import gleam/http
 import gleam/int
+import gleam/json
 import gleam/list
 import gleam/option.{type Option, None}
 import gleam/pair
@@ -18,7 +19,7 @@ fn default_field(key, decoder, default, k) {
   )
 }
 
-fn optional_field(key, decoder, k) {
+pub fn optional_field(key, decoder, k) {
   decode.optional_field(key, None, decode.optional(decoder), k)
 }
 
@@ -556,7 +557,7 @@ fn type_decoder() {
   )
 }
 
-fn schema_decoder() {
+pub fn schema_decoder() {
   use <- decode.recursive()
   decode.one_of(
     {
@@ -758,6 +759,20 @@ fn schema_decoder() {
         }),
     ],
   )
+}
+
+pub fn encode_schema(schema) {
+  case schema {
+    Boolean(nullable:, title:, description:, deprecated:) ->
+      json.object([
+        #("type", json.string("boolean")),
+        #("nullable", json.bool(nullable)),
+        #("title", json.nullable(title, json.string)),
+        #("description", json.nullable(description, json.string)),
+        #("deprecated", json.bool(deprecated)),
+      ])
+    _ -> todo
+  }
 }
 
 fn non_empty_list_of_schema_decoder() {
