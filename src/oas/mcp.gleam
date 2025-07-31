@@ -6,6 +6,7 @@ import gleam/option.{type Option}
 import oas
 import oas/decodex
 import oas/json_rpc
+import oas/mcp/resource
 import oas/mcp/tool
 
 pub fn request_decoder() {
@@ -176,16 +177,16 @@ pub type ListResourcesResult {
   )
 }
 
-pub fn list_resources_result_decoder() {
-  use resources <- decode.field("resources", decode.list(tool.decoder()))
-  use next_cursor <- oas.optional_field("next_cursor", decode.string)
-  decode.success(ListToolsResult(resources, next_cursor))
-}
+// pub fn list_resources_result_decoder() {
+//   use resources <- decode.field("resources", decode.list(resource.decoder()))
+//   use next_cursor <- oas.optional_field("next_cursor", decode.string)
+//   decode.success(ListToolsResult(resources, next_cursor))
+// }
 
 pub fn encode_list_resources_result(result) {
   let ListResourcesResult(resources:, next_cursor:) = result
   json.object([
-    #("resources", json.array(resources, tool.encode)),
+    #("resources", json.array(resources, resource.encode)),
     #("next_cursor", json.nullable(next_cursor, json.string)),
   ])
 }
