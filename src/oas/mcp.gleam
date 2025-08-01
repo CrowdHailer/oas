@@ -1,4 +1,3 @@
-import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
 import gleam/json.{type Json}
@@ -6,6 +5,7 @@ import gleam/option.{type Option}
 import oas
 import oas/decodex
 import oas/json_rpc
+import oas/mcp/prompt
 import oas/mcp/resource
 import oas/mcp/tool
 
@@ -20,6 +20,7 @@ fn decoders() {
     #("tools/list", json_rpc.FromParams(list_tools_decoder())),
     #("tools/call", json_rpc.FromParams(call_tool_decoder())),
     #("resources/list", json_rpc.FromParams(list_resources_decoder())),
+    #("prompts/list", json_rpc.NoParams(ListPrompts)),
   ]
 }
 
@@ -34,11 +35,12 @@ pub type Params {
     // cursor value is opaque
     cursor: Option(String),
   )
+  CallTool(name: String, arguments: Dynamic)
   ListResources(
     // cursor value is opaque
     cursor: Option(String),
   )
-  CallTool(name: String, arguments: Dynamic)
+  ListPrompts
   Ping
 }
 
@@ -52,7 +54,7 @@ fn initialize_decoder() {
 }
 
 pub type ClientCapabilities {
-  ClientCapabilities(list_changeds: Bool)
+  ClientCapabilities(list_changed: Bool)
 }
 
 pub fn client_capabilities_decoder() {
@@ -78,15 +80,24 @@ pub fn encode_initialize_result(result) {
 }
 
 pub type ServerCapabilities {
-  ServerCapabilities(tools: Dict(String, Bool), resources: Resources)
+  ServerCapabilities(tools: Tools, resources: Resources)
 }
 
 fn encode_server_capabilities(capabilities) {
   let ServerCapabilities(tools:, resources:) = capabilities
   json.object([
-    #("tools", json.dict(tools, fn(id) { id }, json.bool)),
+    #("tools", encode_tools(tools)),
     #("resources", encode_resources(resources)),
   ])
+}
+
+pub type Tools {
+  Tools(list_changed: Bool)
+}
+
+pub fn encode_tools(tools) {
+  let Tools(list_changed:) = tools
+  json.object([#("listChanged", json.bool(list_changed))])
 }
 
 pub type Resources {
@@ -187,6 +198,24 @@ pub fn encode_list_resources_result(result) {
   let ListResourcesResult(resources:, next_cursor:) = result
   json.object([
     #("resources", json.array(resources, resource.encode)),
+    #("next_cursor", json.nullable(next_cursor, json.string)),
+  ])
+}
+
+pub type ListPromptsResult {
+  ListPromptsResult(prompts: List(prompt.Prompt), next_cursor: Option(String))
+}
+
+// pub fn list_prompts_result_decoder() {
+//   use prompts <- decode.field("prompts", decode.list(prompt.decoder()))
+//   use next_cursor <- oas.optional_field("next_cursor", decode.string)
+//   decode.success(ListToolsResult(prompts, next_cursor))
+// }
+
+pub fn encode_list_prompts_result(result) {
+  let ListPromptsResult(prompts:, next_cursor:) = result
+  json.object([
+    #("prompts", json.array(prompts, prompt.encode)),
     #("next_cursor", json.nullable(next_cursor, json.string)),
   ])
 }
