@@ -1,7 +1,7 @@
 name = "oas"
-version = "6.0.0"
+version = "6.1.0"
 target = "javascript"
-description = "Parse an open api (previously swagger) spec."
+description = "Work with Open API Specs (previously swagger) and JSON Schema"
 licences = ["Apache-2.0"]
 repository = { type = "github", user = "crowdhailer", repo = "oas" }
 links = []
