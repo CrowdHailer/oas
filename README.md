@@ -1,6 +1,10 @@
 # oas
 
-Parse an open api (previously swagger) spec.
+Work with Open API Specs (previously swagger) and JSON Schema.
+- Parse an Open API Spec
+- Parse a JSON Schema
+- Build JSON Schema from DSL
+- Serialize JSON Schemas to JSON
 
 [![Package Version](https://img.shields.io/hexpm/v/oas)](https://hex.pm/packages/oas)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/oas/)
@@ -8,6 +12,8 @@ Parse an open api (previously swagger) spec.
 ```sh
 gleam add oas@1
 ```
+
+### Decode Open API Spec
 
 The `oas` library provides a decoder that is designed to be used with JSON or YAML.
 
@@ -28,6 +34,30 @@ pub fn main() {
 ```
 
 Further documentation can be found at <https://hexdocs.pm/oas>.
+
+### Build and serialize JSON Schema
+
+```gleam
+import gleam/json
+import oas/json_schema
+import simplifile
+
+pub fn list_users() {
+  json_schema.object([
+    json_schema.field("priority", json_schema.string()),
+    json_schema.optional_field("country", json_schema.string()),
+  ])
+}
+
+pub fn main() {
+  list_users()
+  |> json_schema.encode()
+  |> json.to_string()
+  |> simplifile.write("schema.json", _)
+}
+```
+
+Use [oas_generator](https://github.com/crowdhailer/oas_generator) to generate gleam types from an JSON Schema.
 
 ## Development
 
