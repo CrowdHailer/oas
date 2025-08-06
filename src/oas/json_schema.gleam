@@ -83,6 +83,10 @@ pub fn field(key, schema) {
   #(key, oas.Inline(schema), True)
 }
 
+pub fn optional_field(key, schema) {
+  #(key, oas.Inline(schema), False)
+}
+
 pub fn encode(schema) {
   case schema {
     oas.Boolean(nullable:, title:, description:, deprecated:) ->
