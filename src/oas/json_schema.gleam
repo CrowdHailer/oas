@@ -2,6 +2,7 @@ import gleam/dict
 import gleam/json
 import gleam/list
 import gleam/option.{None, Some}
+import non_empty_list
 import oas
 
 pub fn boolean() {
@@ -179,7 +180,32 @@ pub fn encode(schema) {
         #("deprecated", Some(json.bool(object.deprecated))),
       ])
     }
-    _ -> todo
+    oas.AllOf(varients) -> {
+      json_object([
+        #(
+          "allOf",
+          Some(json.array(non_empty_list.to_list(varients), ref_encode)),
+        ),
+      ])
+    }
+    oas.AnyOf(varients) -> {
+      json_object([
+        #(
+          "anyOf",
+          Some(json.array(non_empty_list.to_list(varients), ref_encode)),
+        ),
+      ])
+    }
+    oas.OneOf(varients) -> {
+      json_object([
+        #(
+          "oneOf",
+          Some(json.array(non_empty_list.to_list(varients), ref_encode)),
+        ),
+      ])
+    }
+    oas.AlwaysPasses -> json.bool(True)
+    oas.AlwaysFails -> json.bool(False)
   }
 }
 

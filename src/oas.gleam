@@ -2,7 +2,6 @@ import gleam/dict.{type Dict}
 import gleam/dynamic/decode
 import gleam/http
 import gleam/int
-import gleam/json
 import gleam/list
 import gleam/option.{type Option, None}
 import gleam/pair
