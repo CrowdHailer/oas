@@ -18,3 +18,7 @@ pub fn discriminate(
   )
   on
 }
+
+pub fn any() {
+  decode.new_primitive_decoder("any", Ok)
+}
