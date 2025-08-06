@@ -15,3 +15,5 @@ There is no mention of custom connectors, although no details are shared about t
 ## OpenAI
 
 Needs a Pro or Team Plan 
+
+https://aaronparecki.com/articles

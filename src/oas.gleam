@@ -761,20 +761,6 @@ pub fn schema_decoder() {
   )
 }
 
-pub fn encode_schema(schema) {
-  case schema {
-    Boolean(nullable:, title:, description:, deprecated:) ->
-      json.object([
-        #("type", json.string("boolean")),
-        #("nullable", json.bool(nullable)),
-        #("title", json.nullable(title, json.string)),
-        #("description", json.nullable(description, json.string)),
-        #("deprecated", json.bool(deprecated)),
-      ])
-    _ -> todo
-  }
-}
-
 fn non_empty_list_of_schema_decoder() {
   use list <- decode.then(decode.list(ref_decoder(schema_decoder())))
   case list {

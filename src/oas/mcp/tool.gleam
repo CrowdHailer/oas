@@ -3,6 +3,7 @@ import gleam/dynamic/decode
 import gleam/json
 import gleam/option.{type Option}
 import oas
+import oas/json_schema
 
 pub type Tool {
   Tool(
@@ -34,7 +35,10 @@ pub fn encode(tool) {
       "inputSchema",
       json.object([
         #("type", json.string("object")),
-        #("properties", json.dict(input_schema, fn(x) { x }, oas.encode_schema)),
+        #(
+          "properties",
+          json.dict(input_schema, fn(x) { x }, json_schema.encode),
+        ),
       ]),
     ),
   ])
