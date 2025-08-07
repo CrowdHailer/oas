@@ -60,7 +60,11 @@ pub fn dict(dict, values) {
 // }
 
 pub fn decode_additional(except, decoder, next) {
-  todo as "decode additional"
+  // use r <- decode.then(decode.dict(decode.string, decoder))
+  // let additional = dict.drop(r, except)
+  // TODO
+  use additional <- decode.then(decode.success(dict.new()))
+  next(additional)
 }
 
 pub fn object(entries: List(#(String, json.Json))) {

@@ -1,9 +1,9 @@
-import gleam/option.{type Option, None}
-import oas/mcp/utils
-import gleam/json
+import gleam/dict
 import gleam/dynamic
 import gleam/dynamic/decode
-import gleam/dict
+import gleam/json
+import gleam/option.{type Option, None}
+import oas/mcp/utils
 
 pub type BaseMetadata {
   BaseMetadata(name: String, title: Option(String))
@@ -714,29 +714,24 @@ pub fn internal_16_decoder() {
     ["progressToken"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    Internal16(
-      progress_token: progress_token,
-      additional_properties: additional_properties,
-    ),
-  )
+  decode.success(Internal16(
+    progress_token: progress_token,
+    additional_properties: additional_properties,
+  ))
 }
 
 pub fn internal_16_encode(data: Internal16) {
-  utils.object(
-    [
-      #(
-        "progressToken",
-        json.nullable(data.progress_token, progress_token_encode),
-      ),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+  utils.object([
+    #(
+      "progressToken",
+      json.nullable(data.progress_token, progress_token_encode),
+    ),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn internal_15_decoder() {
@@ -749,29 +744,24 @@ pub fn internal_15_decoder() {
     ["progressToken"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    Internal15(
-      progress_token: progress_token,
-      additional_properties: additional_properties,
-    ),
-  )
+  decode.success(Internal15(
+    progress_token: progress_token,
+    additional_properties: additional_properties,
+  ))
 }
 
 pub fn internal_15_encode(data: Internal15) {
-  utils.object(
-    [
-      #(
-        "progressToken",
-        json.nullable(data.progress_token, progress_token_encode),
-      ),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+  utils.object([
+    #(
+      "progressToken",
+      json.nullable(data.progress_token, progress_token_encode),
+    ),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn internal_14_decoder() {
@@ -815,24 +805,20 @@ pub fn internal_12_decoder() {
 }
 
 pub fn internal_12_encode(data: Internal12) {
-  utils.object(
-    [
-      #("subscribe", json.nullable(data.subscribe, json.bool)),
-      #("listChanged", json.nullable(data.list_changed, json.bool))
-    ],
-  )
+  utils.object([
+    #("subscribe", json.nullable(data.subscribe, json.bool)),
+    #("listChanged", json.nullable(data.list_changed, json.bool)),
+  ])
 }
 
 pub fn internal_11_decoder() {
   use properties <- decode.optional_field(
     "properties",
     None,
-    decode.optional(
-      decode.dict(
-        decode.string,
-        decode.dict(decode.string, utils.dynamic_to_json()),
-      ),
-    ),
+    decode.optional(decode.dict(
+      decode.string,
+      decode.dict(decode.string, utils.dynamic_to_json()),
+    )),
   )
   use type_ <- decode.field("type", decode.string)
   use required <- decode.optional_field(
@@ -840,37 +826,35 @@ pub fn internal_11_decoder() {
     None,
     decode.optional(decode.list(decode.string)),
   )
-  decode.success(
-    Internal11(properties: properties, type_: type_, required: required),
-  )
+  decode.success(Internal11(
+    properties: properties,
+    type_: type_,
+    required: required,
+  ))
 }
 
 pub fn internal_11_encode(data: Internal11) {
-  utils.object(
-    [
-      #(
-        "properties",
-        json.nullable(
-          data.properties,
-          utils.dict(_, utils.dict(_, fn(data) { data })),
-        ),
+  utils.object([
+    #(
+      "properties",
+      json.nullable(
+        data.properties,
+        utils.dict(_, utils.dict(_, fn(data) { data })),
       ),
-      #("type", json.string(data.type_)),
-      #("required", json.nullable(data.required, json.array(_, json.string)))
-    ],
-  )
+    ),
+    #("type", json.string(data.type_)),
+    #("required", json.nullable(data.required, json.array(_, json.string))),
+  ])
 }
 
 pub fn internal_10_decoder() {
   use properties <- decode.optional_field(
     "properties",
     None,
-    decode.optional(
-      decode.dict(
-        decode.string,
-        decode.dict(decode.string, utils.dynamic_to_json()),
-      ),
-    ),
+    decode.optional(decode.dict(
+      decode.string,
+      decode.dict(decode.string, utils.dynamic_to_json()),
+    )),
   )
   use type_ <- decode.field("type", decode.string)
   use required <- decode.optional_field(
@@ -878,25 +862,25 @@ pub fn internal_10_decoder() {
     None,
     decode.optional(decode.list(decode.string)),
   )
-  decode.success(
-    Internal10(properties: properties, type_: type_, required: required),
-  )
+  decode.success(Internal10(
+    properties: properties,
+    type_: type_,
+    required: required,
+  ))
 }
 
 pub fn internal_10_encode(data: Internal10) {
-  utils.object(
-    [
-      #(
-        "properties",
-        json.nullable(
-          data.properties,
-          utils.dict(_, utils.dict(_, fn(data) { data })),
-        ),
+  utils.object([
+    #(
+      "properties",
+      json.nullable(
+        data.properties,
+        utils.dict(_, utils.dict(_, fn(data) { data })),
       ),
-      #("type", json.string(data.type_)),
-      #("required", json.nullable(data.required, json.array(_, json.string)))
-    ],
-  )
+    ),
+    #("type", json.string(data.type_)),
+    #("required", json.nullable(data.required, json.array(_, json.string))),
+  ])
 }
 
 pub fn internal_9_decoder() {
@@ -906,9 +890,10 @@ pub fn internal_9_decoder() {
 }
 
 pub fn internal_9_encode(data: Internal9) {
-  utils.object(
-    [#("name", json.string(data.name)), #("value", json.string(data.value))],
-  )
+  utils.object([
+    #("name", json.string(data.name)),
+    #("value", json.string(data.value)),
+  ])
 }
 
 pub fn internal_8_decoder() {
@@ -921,9 +906,9 @@ pub fn internal_8_decoder() {
 }
 
 pub fn internal_8_encode(data: Internal8) {
-  utils.object(
-    [#("arguments", json.nullable(data.arguments, utils.dict(_, json.string)))],
-  )
+  utils.object([
+    #("arguments", json.nullable(data.arguments, utils.dict(_, json.string))),
+  ])
 }
 
 pub fn internal_7_decoder() {
@@ -938,13 +923,11 @@ pub fn internal_7_decoder() {
 }
 
 pub fn internal_7_encode(data: Internal7) {
-  utils.object(
-    [
-      #("values", json.array(_, json.string)(data.values)),
-      #("total", json.nullable(data.total, json.int)),
-      #("hasMore", json.nullable(data.has_more, json.bool))
-    ],
-  )
+  utils.object([
+    #("values", json.array(_, json.string)(data.values)),
+    #("total", json.nullable(data.total, json.int)),
+    #("hasMore", json.nullable(data.has_more, json.bool)),
+  ])
 }
 
 pub fn internal_6_decoder() {
@@ -957,23 +940,21 @@ pub fn internal_6_decoder() {
     ["_meta"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    Internal6(meta: meta, additional_properties: additional_properties),
-  )
+  decode.success(Internal6(
+    meta: meta,
+    additional_properties: additional_properties,
+  ))
 }
 
 pub fn internal_6_encode(data: Internal6) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, internal_5_encode)),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, internal_5_encode)),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn internal_5_decoder() {
@@ -986,29 +967,24 @@ pub fn internal_5_decoder() {
     ["progressToken"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    Internal5(
-      progress_token: progress_token,
-      additional_properties: additional_properties,
-    ),
-  )
+  decode.success(Internal5(
+    progress_token: progress_token,
+    additional_properties: additional_properties,
+  ))
 }
 
 pub fn internal_5_encode(data: Internal5) {
-  utils.object(
-    [
-      #(
-        "progressToken",
-        json.nullable(data.progress_token, progress_token_encode),
-      ),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+  utils.object([
+    #(
+      "progressToken",
+      json.nullable(data.progress_token, progress_token_encode),
+    ),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn internal_4_decoder() {
@@ -1021,29 +997,24 @@ pub fn internal_4_decoder() {
     ["progressToken"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    Internal4(
-      progress_token: progress_token,
-      additional_properties: additional_properties,
-    ),
-  )
+  decode.success(Internal4(
+    progress_token: progress_token,
+    additional_properties: additional_properties,
+  ))
 }
 
 pub fn internal_4_encode(data: Internal4) {
-  utils.object(
-    [
-      #(
-        "progressToken",
-        json.nullable(data.progress_token, progress_token_encode),
-      ),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+  utils.object([
+    #(
+      "progressToken",
+      json.nullable(data.progress_token, progress_token_encode),
+    ),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn internal_3_decoder() {
@@ -1052,10 +1023,9 @@ pub fn internal_3_decoder() {
     "data",
     None,
     decode.optional(
-      decode.new_primitive_decoder(
-        "Never",
-        fn(_) { panic as "tried to decode a never decode value" },
-      ),
+      decode.new_primitive_decoder("Never", fn(_) {
+        panic as "tried to decode a never decode value"
+      }),
     ),
   )
   use code <- decode.field("code", decode.int)
@@ -1063,19 +1033,16 @@ pub fn internal_3_decoder() {
 }
 
 pub fn internal_3_encode(data: Internal3) {
-  utils.object(
-    [
-      #("message", json.string(data.message)),
-      #(
-        "data",
-        json.nullable(
-          data.data,
-          fn(_data) { panic as "never value cannot be encoded" },
-        ),
-      ),
-      #("code", json.int(data.code))
-    ],
-  )
+  utils.object([
+    #("message", json.string(data.message)),
+    #(
+      "data",
+      json.nullable(data.data, fn(_data) {
+        panic as "never value cannot be encoded"
+      }),
+    ),
+    #("code", json.int(data.code)),
+  ])
 }
 
 pub fn internal_2_decoder() {
@@ -1088,23 +1055,21 @@ pub fn internal_2_decoder() {
     ["_meta"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    Internal2(meta: meta, additional_properties: additional_properties),
-  )
+  decode.success(Internal2(
+    meta: meta,
+    additional_properties: additional_properties,
+  ))
 }
 
 pub fn internal_2_encode(data: Internal2) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn internal_1_decoder() {
@@ -1118,22 +1083,22 @@ pub fn internal_1_decoder() {
     None,
     decode.optional(decode.list(decode.string)),
   )
-  decode.success(
-    Internal1(properties: properties, type_: type_, required: required),
-  )
+  decode.success(Internal1(
+    properties: properties,
+    type_: type_,
+    required: required,
+  ))
 }
 
 pub fn internal_1_encode(data: Internal1) {
-  utils.object(
-    [
-      #(
-        "properties",
-        utils.dict(_, primitive_schema_definition_encode)(data.properties),
-      ),
-      #("type", json.string(data.type_)),
-      #("required", json.nullable(data.required, json.array(_, json.string)))
-    ],
-  )
+  utils.object([
+    #(
+      "properties",
+      utils.dict(_, primitive_schema_definition_encode)(data.properties),
+    ),
+    #("type", json.string(data.type_)),
+    #("required", json.nullable(data.required, json.array(_, json.string))),
+  ])
 }
 
 pub fn internal_0_decoder() {
@@ -1159,49 +1124,43 @@ pub fn initialized_notification_decoder() {
     ["_meta"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    InitializedNotification(
-      meta: meta,
-      additional_properties: additional_properties,
-    ),
-  )
+  decode.success(InitializedNotification(
+    meta: meta,
+    additional_properties: additional_properties,
+  ))
 }
 
 pub fn initialized_notification_encode(data: InitializedNotification) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn initialize_request_decoder() {
   use protocol_version <- decode.field("protocolVersion", decode.string)
-  use capabilities <- decode.field("capabilities", client_capabilities_decoder())
-  use client_info <- decode.field("clientInfo", implementation_decoder())
-  decode.success(
-    InitializeRequest(
-      protocol_version: protocol_version,
-      capabilities: capabilities,
-      client_info: client_info,
-    ),
+  use capabilities <- decode.field(
+    "capabilities",
+    client_capabilities_decoder(),
   )
+  use client_info <- decode.field("clientInfo", implementation_decoder())
+  decode.success(InitializeRequest(
+    protocol_version: protocol_version,
+    capabilities: capabilities,
+    client_info: client_info,
+  ))
 }
 
 pub fn initialize_request_encode(data: InitializeRequest) {
-  utils.object(
-    [
-      #("protocolVersion", json.string(data.protocol_version)),
-      #("capabilities", client_capabilities_encode(data.capabilities)),
-      #("clientInfo", implementation_encode(data.client_info))
-    ],
-  )
+  utils.object([
+    #("protocolVersion", json.string(data.protocol_version)),
+    #("capabilities", client_capabilities_encode(data.capabilities)),
+    #("clientInfo", implementation_encode(data.client_info)),
+  ])
 }
 
 pub fn jsonrpcresponse_decoder() {
@@ -1212,13 +1171,11 @@ pub fn jsonrpcresponse_decoder() {
 }
 
 pub fn jsonrpcresponse_encode(data: Jsonrpcresponse) {
-  utils.object(
-    [
-      #("id", request_id_encode(data.id)),
-      #("result", result_encode(data.result)),
-      #("jsonrpc", json.string(data.jsonrpc))
-    ],
-  )
+  utils.object([
+    #("id", request_id_encode(data.id)),
+    #("result", result_encode(data.result)),
+    #("jsonrpc", json.string(data.jsonrpc)),
+  ])
 }
 
 pub fn image_content_decoder() {
@@ -1235,27 +1192,23 @@ pub fn image_content_decoder() {
   use data <- decode.field("data", decode.string)
   use mime_type <- decode.field("mimeType", decode.string)
   use type_ <- decode.field("type", decode.string)
-  decode.success(
-    ImageContent(
-      meta: meta,
-      annotations: annotations,
-      data: data,
-      mime_type: mime_type,
-      type_: type_,
-    ),
-  )
+  decode.success(ImageContent(
+    meta: meta,
+    annotations: annotations,
+    data: data,
+    mime_type: mime_type,
+    type_: type_,
+  ))
 }
 
 pub fn image_content_encode(data: ImageContent) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("annotations", json.nullable(data.annotations, annotations_encode)),
-      #("data", json.string(data.data)),
-      #("mimeType", json.string(data.mime_type)),
-      #("type", json.string(data.type_))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("annotations", json.nullable(data.annotations, annotations_encode)),
+    #("data", json.string(data.data)),
+    #("mimeType", json.string(data.mime_type)),
+    #("type", json.string(data.type_)),
+  ])
 }
 
 pub fn unsubscribe_request_decoder() {
@@ -1290,28 +1243,23 @@ pub fn prompt_list_changed_notification_decoder() {
     ["_meta"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    PromptListChangedNotification(
-      meta: meta,
-      additional_properties: additional_properties,
-    ),
-  )
+  decode.success(PromptListChangedNotification(
+    meta: meta,
+    additional_properties: additional_properties,
+  ))
 }
 
 pub fn prompt_list_changed_notification_encode(
   data: PromptListChangedNotification,
 ) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn ping_request_decoder() {
@@ -1324,23 +1272,21 @@ pub fn ping_request_decoder() {
     ["_meta"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    PingRequest(meta: meta, additional_properties: additional_properties),
-  )
+  decode.success(PingRequest(
+    meta: meta,
+    additional_properties: additional_properties,
+  ))
 }
 
 pub fn ping_request_encode(data: PingRequest) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, internal_16_encode)),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, internal_16_encode)),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn result_decoder() {
@@ -1353,23 +1299,21 @@ pub fn result_decoder() {
     ["_meta"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    Result(meta: meta, additional_properties: additional_properties),
-  )
+  decode.success(Result(
+    meta: meta,
+    additional_properties: additional_properties,
+  ))
 }
 
 pub fn result_encode(data: Result) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn list_roots_request_decoder() {
@@ -1382,23 +1326,21 @@ pub fn list_roots_request_decoder() {
     ["_meta"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    ListRootsRequest(meta: meta, additional_properties: additional_properties),
-  )
+  decode.success(ListRootsRequest(
+    meta: meta,
+    additional_properties: additional_properties,
+  ))
 }
 
 pub fn list_roots_request_encode(data: ListRootsRequest) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, internal_15_encode)),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, internal_15_encode)),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn cancelled_notification_decoder() {
@@ -1412,12 +1354,10 @@ pub fn cancelled_notification_decoder() {
 }
 
 pub fn cancelled_notification_encode(data: CancelledNotification) {
-  utils.object(
-    [
-      #("reason", json.nullable(data.reason, json.string)),
-      #("requestId", request_id_encode(data.request_id))
-    ],
-  )
+  utils.object([
+    #("reason", json.nullable(data.reason, json.string)),
+    #("requestId", request_id_encode(data.request_id)),
+  ])
 }
 
 pub fn primitive_schema_definition_decoder() {
@@ -1440,19 +1380,19 @@ pub fn list_tools_result_decoder() {
     decode.optional(decode.string),
   )
   use tools <- decode.field("tools", decode.list(tool_decoder()))
-  decode.success(
-    ListToolsResult(meta: meta, next_cursor: next_cursor, tools: tools),
-  )
+  decode.success(ListToolsResult(
+    meta: meta,
+    next_cursor: next_cursor,
+    tools: tools,
+  ))
 }
 
 pub fn list_tools_result_encode(data: ListToolsResult) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("nextCursor", json.nullable(data.next_cursor, json.string)),
-      #("tools", json.array(_, tool_encode)(data.tools))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("nextCursor", json.nullable(data.next_cursor, json.string)),
+    #("tools", json.array(_, tool_encode)(data.tools)),
+  ])
 }
 
 pub fn server_capabilities_decoder() {
@@ -1464,12 +1404,10 @@ pub fn server_capabilities_decoder() {
   use experimental <- decode.optional_field(
     "experimental",
     None,
-    decode.optional(
-      decode.dict(
-        decode.string,
-        decode.dict(decode.string, utils.dynamic_to_json()),
-      ),
-    ),
+    decode.optional(decode.dict(
+      decode.string,
+      decode.dict(decode.string, utils.dynamic_to_json()),
+    )),
   )
   use prompts <- decode.optional_field(
     "prompts",
@@ -1491,38 +1429,34 @@ pub fn server_capabilities_decoder() {
     None,
     decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
   )
-  decode.success(
-    ServerCapabilities(
-      resources: resources,
-      experimental: experimental,
-      prompts: prompts,
-      completions: completions,
-      tools: tools,
-      logging: logging,
-    ),
-  )
+  decode.success(ServerCapabilities(
+    resources: resources,
+    experimental: experimental,
+    prompts: prompts,
+    completions: completions,
+    tools: tools,
+    logging: logging,
+  ))
 }
 
 pub fn server_capabilities_encode(data: ServerCapabilities) {
-  utils.object(
-    [
-      #("resources", json.nullable(data.resources, internal_12_encode)),
-      #(
-        "experimental",
-        json.nullable(
-          data.experimental,
-          utils.dict(_, utils.dict(_, fn(data) { data })),
-        ),
+  utils.object([
+    #("resources", json.nullable(data.resources, internal_12_encode)),
+    #(
+      "experimental",
+      json.nullable(
+        data.experimental,
+        utils.dict(_, utils.dict(_, fn(data) { data })),
       ),
-      #("prompts", json.nullable(data.prompts, internal_13_encode)),
-      #(
-        "completions",
-        json.nullable(data.completions, utils.dict(_, fn(data) { data })),
-      ),
-      #("tools", json.nullable(data.tools, internal_14_encode)),
-      #("logging", json.nullable(data.logging, utils.dict(_, fn(data) { data })))
-    ],
-  )
+    ),
+    #("prompts", json.nullable(data.prompts, internal_13_encode)),
+    #(
+      "completions",
+      json.nullable(data.completions, utils.dict(_, fn(data) { data })),
+    ),
+    #("tools", json.nullable(data.tools, internal_14_encode)),
+    #("logging", json.nullable(data.logging, utils.dict(_, fn(data) { data }))),
+  ])
 }
 
 pub fn call_tool_request_decoder() {
@@ -1536,15 +1470,13 @@ pub fn call_tool_request_decoder() {
 }
 
 pub fn call_tool_request_encode(data: CallToolRequest) {
-  utils.object(
-    [
-      #("name", json.string(data.name)),
-      #(
-        "arguments",
-        json.nullable(data.arguments, utils.dict(_, fn(data) { data })),
-      )
-    ],
-  )
+  utils.object([
+    #("name", json.string(data.name)),
+    #(
+      "arguments",
+      json.nullable(data.arguments, utils.dict(_, fn(data) { data })),
+    ),
+  ])
 }
 
 pub fn progress_notification_decoder() {
@@ -1560,25 +1492,21 @@ pub fn progress_notification_decoder() {
   )
   use progress_token <- decode.field("progressToken", progress_token_decoder())
   use progress <- decode.field("progress", decode.float)
-  decode.success(
-    ProgressNotification(
-      total: total,
-      message: message,
-      progress_token: progress_token,
-      progress: progress,
-    ),
-  )
+  decode.success(ProgressNotification(
+    total: total,
+    message: message,
+    progress_token: progress_token,
+    progress: progress,
+  ))
 }
 
 pub fn progress_notification_encode(data: ProgressNotification) {
-  utils.object(
-    [
-      #("total", json.nullable(data.total, json.float)),
-      #("message", json.nullable(data.message, json.string)),
-      #("progressToken", progress_token_encode(data.progress_token)),
-      #("progress", json.float(data.progress))
-    ],
-  )
+  utils.object([
+    #("total", json.nullable(data.total, json.float)),
+    #("message", json.nullable(data.message, json.string)),
+    #("progressToken", progress_token_encode(data.progress_token)),
+    #("progress", json.float(data.progress)),
+  ])
 }
 
 pub fn resource_updated_notification_decoder() {
@@ -1618,31 +1546,27 @@ pub fn tool_decoder() {
     None,
     decode.optional(decode.string),
   )
-  decode.success(
-    Tool(
-      output_schema: output_schema,
-      meta: meta,
-      annotations: annotations,
-      input_schema: input_schema,
-      name: name,
-      title: title,
-      description: description,
-    ),
-  )
+  decode.success(Tool(
+    output_schema: output_schema,
+    meta: meta,
+    annotations: annotations,
+    input_schema: input_schema,
+    name: name,
+    title: title,
+    description: description,
+  ))
 }
 
 pub fn tool_encode(data: Tool) {
-  utils.object(
-    [
-      #("outputSchema", json.nullable(data.output_schema, internal_10_encode)),
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("annotations", json.nullable(data.annotations, tool_annotations_encode)),
-      #("inputSchema", internal_11_encode(data.input_schema)),
-      #("name", json.string(data.name)),
-      #("title", json.nullable(data.title, json.string)),
-      #("description", json.nullable(data.description, json.string))
-    ],
-  )
+  utils.object([
+    #("outputSchema", json.nullable(data.output_schema, internal_10_encode)),
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("annotations", json.nullable(data.annotations, tool_annotations_encode)),
+    #("inputSchema", internal_11_encode(data.input_schema)),
+    #("name", json.string(data.name)),
+    #("title", json.nullable(data.title, json.string)),
+    #("description", json.nullable(data.description, json.string)),
+  ])
 }
 
 pub fn embedded_resource_decoder() {
@@ -1658,25 +1582,21 @@ pub fn embedded_resource_decoder() {
   )
   use resource <- decode.field("resource", utils.dynamic_to_json())
   use type_ <- decode.field("type", decode.string)
-  decode.success(
-    EmbeddedResource(
-      meta: meta,
-      annotations: annotations,
-      resource: resource,
-      type_: type_,
-    ),
-  )
+  decode.success(EmbeddedResource(
+    meta: meta,
+    annotations: annotations,
+    resource: resource,
+    type_: type_,
+  ))
 }
 
 pub fn embedded_resource_encode(data: EmbeddedResource) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("annotations", json.nullable(data.annotations, annotations_encode)),
-      #("resource", fn(data) { data }(data.resource)),
-      #("type", json.string(data.type_))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("annotations", json.nullable(data.annotations, annotations_encode)),
+    #("resource", fn(data) { data }(data.resource)),
+    #("type", json.string(data.type_)),
+  ])
 }
 
 pub fn get_prompt_result_decoder() {
@@ -1685,25 +1605,28 @@ pub fn get_prompt_result_decoder() {
     None,
     decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
   )
-  use messages <- decode.field("messages", decode.list(prompt_message_decoder()))
+  use messages <- decode.field(
+    "messages",
+    decode.list(prompt_message_decoder()),
+  )
   use description <- decode.optional_field(
     "description",
     None,
     decode.optional(decode.string),
   )
-  decode.success(
-    GetPromptResult(meta: meta, messages: messages, description: description),
-  )
+  decode.success(GetPromptResult(
+    meta: meta,
+    messages: messages,
+    description: description,
+  ))
 }
 
 pub fn get_prompt_result_encode(data: GetPromptResult) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("messages", json.array(_, prompt_message_encode)(data.messages)),
-      #("description", json.nullable(data.description, json.string))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("messages", json.array(_, prompt_message_encode)(data.messages)),
+    #("description", json.nullable(data.description, json.string)),
+  ])
 }
 
 pub fn cursor_decoder() {
@@ -1726,13 +1649,11 @@ pub fn complete_request_decoder() {
 }
 
 pub fn complete_request_encode(data: CompleteRequest) {
-  utils.object(
-    [
-      #("context", json.nullable(data.context, internal_8_encode)),
-      #("ref", fn(data) { data }(data.ref)),
-      #("argument", internal_9_encode(data.argument))
-    ],
-  )
+  utils.object([
+    #("context", json.nullable(data.context, internal_8_encode)),
+    #("ref", fn(data) { data }(data.ref)),
+    #("argument", internal_9_encode(data.argument)),
+  ])
 }
 
 pub fn complete_result_decoder() {
@@ -1746,12 +1667,10 @@ pub fn complete_result_decoder() {
 }
 
 pub fn complete_result_encode(data: CompleteResult) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("completion", internal_7_encode(data.completion))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("completion", internal_7_encode(data.completion)),
+  ])
 }
 
 pub fn role_decoder() {
@@ -1781,12 +1700,10 @@ pub fn get_prompt_request_decoder() {
 }
 
 pub fn get_prompt_request_encode(data: GetPromptRequest) {
-  utils.object(
-    [
-      #("name", json.string(data.name)),
-      #("arguments", json.nullable(data.arguments, utils.dict(_, json.string)))
-    ],
-  )
+  utils.object([
+    #("name", json.string(data.name)),
+    #("arguments", json.nullable(data.arguments, utils.dict(_, json.string))),
+  ])
 }
 
 pub fn text_resource_contents_decoder() {
@@ -1802,20 +1719,21 @@ pub fn text_resource_contents_decoder() {
     None,
     decode.optional(decode.string),
   )
-  decode.success(
-    TextResourceContents(meta: meta, uri: uri, text: text, mime_type: mime_type),
-  )
+  decode.success(TextResourceContents(
+    meta: meta,
+    uri: uri,
+    text: text,
+    mime_type: mime_type,
+  ))
 }
 
 pub fn text_resource_contents_encode(data: TextResourceContents) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("uri", json.string(data.uri)),
-      #("text", json.string(data.text)),
-      #("mimeType", json.nullable(data.mime_type, json.string))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("uri", json.string(data.uri)),
+    #("text", json.string(data.text)),
+    #("mimeType", json.nullable(data.mime_type, json.string)),
+  ])
 }
 
 pub fn content_block_decoder() {
@@ -1843,60 +1761,52 @@ pub fn call_tool_result_decoder() {
     None,
     decode.optional(decode.bool),
   )
-  decode.success(
-    CallToolResult(
-      meta: meta,
-      structured_content: structured_content,
-      content: content,
-      is_error: is_error,
-    ),
-  )
+  decode.success(CallToolResult(
+    meta: meta,
+    structured_content: structured_content,
+    content: content,
+    is_error: is_error,
+  ))
 }
 
 pub fn call_tool_result_encode(data: CallToolResult) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #(
-        "structuredContent",
-        json.nullable(data.structured_content, utils.dict(_, fn(data) { data })),
-      ),
-      #("content", json.array(_, content_block_encode)(data.content)),
-      #("isError", json.nullable(data.is_error, json.bool))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #(
+      "structuredContent",
+      json.nullable(data.structured_content, utils.dict(_, fn(data) { data })),
+    ),
+    #("content", json.array(_, content_block_encode)(data.content)),
+    #("isError", json.nullable(data.is_error, json.bool)),
+  ])
 }
 
 pub fn logging_message_notification_decoder() {
   use level <- decode.field("level", logging_level_decoder())
   use data <- decode.field(
     "data",
-    decode.new_primitive_decoder(
-      "Never",
-      fn(_) { panic as "tried to decode a never decode value" },
-    ),
+    decode.new_primitive_decoder("Never", fn(_) {
+      panic as "tried to decode a never decode value"
+    }),
   )
   use logger <- decode.optional_field(
     "logger",
     None,
     decode.optional(decode.string),
   )
-  decode.success(
-    LoggingMessageNotification(level: level, data: data, logger: logger),
-  )
+  decode.success(LoggingMessageNotification(
+    level: level,
+    data: data,
+    logger: logger,
+  ))
 }
 
 pub fn logging_message_notification_encode(data: LoggingMessageNotification) {
-  utils.object(
-    [
-      #("level", logging_level_encode(data.level)),
-      #(
-        "data",
-        fn(_data) { panic as "never value cannot be encoded" }(data.data),
-      ),
-      #("logger", json.nullable(data.logger, json.string))
-    ],
-  )
+  utils.object([
+    #("level", logging_level_encode(data.level)),
+    #("data", fn(_data) { panic as "never value cannot be encoded" }(data.data)),
+    #("logger", json.nullable(data.logger, json.string)),
+  ])
 }
 
 pub fn resource_list_changed_notification_decoder() {
@@ -1909,28 +1819,23 @@ pub fn resource_list_changed_notification_decoder() {
     ["_meta"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    ResourceListChangedNotification(
-      meta: meta,
-      additional_properties: additional_properties,
-    ),
-  )
+  decode.success(ResourceListChangedNotification(
+    meta: meta,
+    additional_properties: additional_properties,
+  ))
 }
 
 pub fn resource_list_changed_notification_encode(
   data: ResourceListChangedNotification,
 ) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn jsonrpcrequest_decoder() {
@@ -1942,20 +1847,21 @@ pub fn jsonrpcrequest_decoder() {
   )
   use id <- decode.field("id", request_id_decoder())
   use jsonrpc <- decode.field("jsonrpc", decode.string)
-  decode.success(
-    Jsonrpcrequest(method_: method_, params: params, id: id, jsonrpc: jsonrpc),
-  )
+  decode.success(Jsonrpcrequest(
+    method_: method_,
+    params: params,
+    id: id,
+    jsonrpc: jsonrpc,
+  ))
 }
 
 pub fn jsonrpcrequest_encode(data: Jsonrpcrequest) {
-  utils.object(
-    [
-      #("method", json.string(data.method_)),
-      #("params", json.nullable(data.params, internal_6_encode)),
-      #("id", request_id_encode(data.id)),
-      #("jsonrpc", json.string(data.jsonrpc))
-    ],
-  )
+  utils.object([
+    #("method", json.string(data.method_)),
+    #("params", json.nullable(data.params, internal_6_encode)),
+    #("id", request_id_encode(data.id)),
+    #("jsonrpc", json.string(data.jsonrpc)),
+  ])
 }
 
 pub fn implementation_decoder() {
@@ -1970,13 +1876,11 @@ pub fn implementation_decoder() {
 }
 
 pub fn implementation_encode(data: Implementation) {
-  utils.object(
-    [
-      #("name", json.string(data.name)),
-      #("version", json.string(data.version)),
-      #("title", json.nullable(data.title, json.string))
-    ],
-  )
+  utils.object([
+    #("name", json.string(data.name)),
+    #("version", json.string(data.version)),
+    #("title", json.nullable(data.title, json.string)),
+  ])
 }
 
 pub fn string_schema_decoder() {
@@ -2006,29 +1910,25 @@ pub fn string_schema_decoder() {
     None,
     decode.optional(decode.string),
   )
-  decode.success(
-    StringSchema(
-      max_length: max_length,
-      format: format,
-      title: title,
-      min_length: min_length,
-      type_: type_,
-      description: description,
-    ),
-  )
+  decode.success(StringSchema(
+    max_length: max_length,
+    format: format,
+    title: title,
+    min_length: min_length,
+    type_: type_,
+    description: description,
+  ))
 }
 
 pub fn string_schema_encode(data: StringSchema) {
-  utils.object(
-    [
-      #("maxLength", json.nullable(data.max_length, json.int)),
-      #("format", json.nullable(data.format, json.string)),
-      #("title", json.nullable(data.title, json.string)),
-      #("minLength", json.nullable(data.min_length, json.int)),
-      #("type", json.string(data.type_)),
-      #("description", json.nullable(data.description, json.string))
-    ],
-  )
+  utils.object([
+    #("maxLength", json.nullable(data.max_length, json.int)),
+    #("format", json.nullable(data.format, json.string)),
+    #("title", json.nullable(data.title, json.string)),
+    #("minLength", json.nullable(data.min_length, json.int)),
+    #("type", json.string(data.type_)),
+    #("description", json.nullable(data.description, json.string)),
+  ])
 }
 
 pub fn list_tools_request_decoder() {
@@ -2055,12 +1955,10 @@ pub fn list_roots_result_decoder() {
 }
 
 pub fn list_roots_result_encode(data: ListRootsResult) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("roots", json.array(_, root_encode)(data.roots))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("roots", json.array(_, root_encode)(data.roots)),
+  ])
 }
 
 pub fn roots_list_changed_notification_decoder() {
@@ -2073,30 +1971,31 @@ pub fn roots_list_changed_notification_decoder() {
     ["_meta"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    RootsListChangedNotification(
-      meta: meta,
-      additional_properties: additional_properties,
-    ),
-  )
+  decode.success(RootsListChangedNotification(
+    meta: meta,
+    additional_properties: additional_properties,
+  ))
 }
 
-pub fn roots_list_changed_notification_encode(data: RootsListChangedNotification) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+pub fn roots_list_changed_notification_encode(
+  data: RootsListChangedNotification,
+) {
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn model_hint_decoder() {
-  use name <- decode.optional_field("name", None, decode.optional(decode.string))
+  use name <- decode.optional_field(
+    "name",
+    None,
+    decode.optional(decode.string),
+  )
   decode.success(ModelHint(name: name))
 }
 
@@ -2114,23 +2013,21 @@ pub fn request_decoder() {
     ["_meta"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    Request(meta: meta, additional_properties: additional_properties),
-  )
+  decode.success(Request(
+    meta: meta,
+    additional_properties: additional_properties,
+  ))
 }
 
 pub fn request_encode(data: Request) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, internal_4_encode)),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, internal_4_encode)),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn model_preferences_decoder() {
@@ -2154,28 +2051,24 @@ pub fn model_preferences_decoder() {
     None,
     decode.optional(decode.float),
   )
-  decode.success(
-    ModelPreferences(
-      intelligence_priority: intelligence_priority,
-      speed_priority: speed_priority,
-      hints: hints,
-      cost_priority: cost_priority,
-    ),
-  )
+  decode.success(ModelPreferences(
+    intelligence_priority: intelligence_priority,
+    speed_priority: speed_priority,
+    hints: hints,
+    cost_priority: cost_priority,
+  ))
 }
 
 pub fn model_preferences_encode(data: ModelPreferences) {
-  utils.object(
-    [
-      #(
-        "intelligencePriority",
-        json.nullable(data.intelligence_priority, json.float),
-      ),
-      #("speedPriority", json.nullable(data.speed_priority, json.float)),
-      #("hints", json.nullable(data.hints, json.array(_, model_hint_encode))),
-      #("costPriority", json.nullable(data.cost_priority, json.float))
-    ],
-  )
+  utils.object([
+    #(
+      "intelligencePriority",
+      json.nullable(data.intelligence_priority, json.float),
+    ),
+    #("speedPriority", json.nullable(data.speed_priority, json.float)),
+    #("hints", json.nullable(data.hints, json.array(_, model_hint_encode))),
+    #("costPriority", json.nullable(data.cost_priority, json.float)),
+  ])
 }
 
 pub fn server_notification_decoder() {
@@ -2198,19 +2091,19 @@ pub fn list_prompts_result_decoder() {
     decode.optional(decode.string),
   )
   use prompts <- decode.field("prompts", decode.list(prompt_decoder()))
-  decode.success(
-    ListPromptsResult(meta: meta, next_cursor: next_cursor, prompts: prompts),
-  )
+  decode.success(ListPromptsResult(
+    meta: meta,
+    next_cursor: next_cursor,
+    prompts: prompts,
+  ))
 }
 
 pub fn list_prompts_result_encode(data: ListPromptsResult) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("nextCursor", json.nullable(data.next_cursor, json.string)),
-      #("prompts", json.array(_, prompt_encode)(data.prompts))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("nextCursor", json.nullable(data.next_cursor, json.string)),
+    #("prompts", json.array(_, prompt_encode)(data.prompts)),
+  ])
 }
 
 pub fn resource_decoder() {
@@ -2242,33 +2135,29 @@ pub fn resource_decoder() {
     None,
     decode.optional(decode.string),
   )
-  decode.success(
-    Resource(
-      size: size,
-      meta: meta,
-      annotations: annotations,
-      name: name,
-      uri: uri,
-      mime_type: mime_type,
-      title: title,
-      description: description,
-    ),
-  )
+  decode.success(Resource(
+    size: size,
+    meta: meta,
+    annotations: annotations,
+    name: name,
+    uri: uri,
+    mime_type: mime_type,
+    title: title,
+    description: description,
+  ))
 }
 
 pub fn resource_encode(data: Resource) {
-  utils.object(
-    [
-      #("size", json.nullable(data.size, json.int)),
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("annotations", json.nullable(data.annotations, annotations_encode)),
-      #("name", json.string(data.name)),
-      #("uri", json.string(data.uri)),
-      #("mimeType", json.nullable(data.mime_type, json.string)),
-      #("title", json.nullable(data.title, json.string)),
-      #("description", json.nullable(data.description, json.string))
-    ],
-  )
+  utils.object([
+    #("size", json.nullable(data.size, json.int)),
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("annotations", json.nullable(data.annotations, annotations_encode)),
+    #("name", json.string(data.name)),
+    #("uri", json.string(data.uri)),
+    #("mimeType", json.nullable(data.mime_type, json.string)),
+    #("title", json.nullable(data.title, json.string)),
+    #("description", json.nullable(data.description, json.string)),
+  ])
 }
 
 pub fn initialize_result_decoder() {
@@ -2284,28 +2173,27 @@ pub fn initialize_result_decoder() {
     decode.optional(decode.string),
   )
   use server_info <- decode.field("serverInfo", implementation_decoder())
-  use capabilities <- decode.field("capabilities", server_capabilities_decoder())
-  decode.success(
-    InitializeResult(
-      protocol_version: protocol_version,
-      meta: meta,
-      instructions: instructions,
-      server_info: server_info,
-      capabilities: capabilities,
-    ),
+  use capabilities <- decode.field(
+    "capabilities",
+    server_capabilities_decoder(),
   )
+  decode.success(InitializeResult(
+    protocol_version: protocol_version,
+    meta: meta,
+    instructions: instructions,
+    server_info: server_info,
+    capabilities: capabilities,
+  ))
 }
 
 pub fn initialize_result_encode(data: InitializeResult) {
-  utils.object(
-    [
-      #("protocolVersion", json.string(data.protocol_version)),
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("instructions", json.nullable(data.instructions, json.string)),
-      #("serverInfo", implementation_encode(data.server_info)),
-      #("capabilities", server_capabilities_encode(data.capabilities))
-    ],
-  )
+  utils.object([
+    #("protocolVersion", json.string(data.protocol_version)),
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("instructions", json.nullable(data.instructions, json.string)),
+    #("serverInfo", implementation_encode(data.server_info)),
+    #("capabilities", server_capabilities_encode(data.capabilities)),
+  ])
 }
 
 pub fn set_level_request_decoder() {
@@ -2338,20 +2226,21 @@ pub fn text_content_decoder() {
   )
   use text <- decode.field("text", decode.string)
   use type_ <- decode.field("type", decode.string)
-  decode.success(
-    TextContent(meta: meta, annotations: annotations, text: text, type_: type_),
-  )
+  decode.success(TextContent(
+    meta: meta,
+    annotations: annotations,
+    text: text,
+    type_: type_,
+  ))
 }
 
 pub fn text_content_encode(data: TextContent) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("annotations", json.nullable(data.annotations, annotations_encode)),
-      #("text", json.string(data.text)),
-      #("type", json.string(data.type_))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("annotations", json.nullable(data.annotations, annotations_encode)),
+    #("text", json.string(data.text)),
+    #("type", json.string(data.type_)),
+  ])
 }
 
 pub fn tool_annotations_decoder() {
@@ -2380,27 +2269,23 @@ pub fn tool_annotations_decoder() {
     None,
     decode.optional(decode.string),
   )
-  decode.success(
-    ToolAnnotations(
-      idempotent_hint: idempotent_hint,
-      read_only_hint: read_only_hint,
-      destructive_hint: destructive_hint,
-      open_world_hint: open_world_hint,
-      title: title,
-    ),
-  )
+  decode.success(ToolAnnotations(
+    idempotent_hint: idempotent_hint,
+    read_only_hint: read_only_hint,
+    destructive_hint: destructive_hint,
+    open_world_hint: open_world_hint,
+    title: title,
+  ))
 }
 
 pub fn tool_annotations_encode(data: ToolAnnotations) {
-  utils.object(
-    [
-      #("idempotentHint", json.nullable(data.idempotent_hint, json.bool)),
-      #("readOnlyHint", json.nullable(data.read_only_hint, json.bool)),
-      #("destructiveHint", json.nullable(data.destructive_hint, json.bool)),
-      #("openWorldHint", json.nullable(data.open_world_hint, json.bool)),
-      #("title", json.nullable(data.title, json.string))
-    ],
-  )
+  utils.object([
+    #("idempotentHint", json.nullable(data.idempotent_hint, json.bool)),
+    #("readOnlyHint", json.nullable(data.read_only_hint, json.bool)),
+    #("destructiveHint", json.nullable(data.destructive_hint, json.bool)),
+    #("openWorldHint", json.nullable(data.open_world_hint, json.bool)),
+    #("title", json.nullable(data.title, json.string)),
+  ])
 }
 
 pub fn server_request_decoder() {
@@ -2430,23 +2315,21 @@ pub fn notification_decoder() {
     ["_meta"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    Notification(meta: meta, additional_properties: additional_properties),
-  )
+  decode.success(Notification(
+    meta: meta,
+    additional_properties: additional_properties,
+  ))
 }
 
 pub fn notification_encode(data: Notification) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn jsonrpcerror_decoder() {
@@ -2457,13 +2340,11 @@ pub fn jsonrpcerror_decoder() {
 }
 
 pub fn jsonrpcerror_encode(data: Jsonrpcerror) {
-  utils.object(
-    [
-      #("error", internal_3_encode(data.error)),
-      #("id", request_id_encode(data.id)),
-      #("jsonrpc", json.string(data.jsonrpc))
-    ],
-  )
+  utils.object([
+    #("error", internal_3_encode(data.error)),
+    #("id", request_id_encode(data.id)),
+    #("jsonrpc", json.string(data.jsonrpc)),
+  ])
 }
 
 pub fn request_id_decoder() {
@@ -2475,10 +2356,9 @@ pub fn request_id_encode(data: RequestId) {
 }
 
 pub fn empty_result_decoder() {
-  decode.new_primitive_decoder(
-    "Never",
-    fn(_) { panic as "tried to decode a never decode value" },
-  )
+  decode.new_primitive_decoder("Never", fn(_) {
+    panic as "tried to decode a never decode value"
+  })
 }
 
 pub fn empty_result_encode(_data: EmptyResult) {
@@ -2507,27 +2387,23 @@ pub fn number_schema_decoder() {
     None,
     decode.optional(decode.string),
   )
-  decode.success(
-    NumberSchema(
-      maximum: maximum,
-      minimum: minimum,
-      title: title,
-      type_: type_,
-      description: description,
-    ),
-  )
+  decode.success(NumberSchema(
+    maximum: maximum,
+    minimum: minimum,
+    title: title,
+    type_: type_,
+    description: description,
+  ))
 }
 
 pub fn number_schema_encode(data: NumberSchema) {
-  utils.object(
-    [
-      #("maximum", json.nullable(data.maximum, json.int)),
-      #("minimum", json.nullable(data.minimum, json.int)),
-      #("title", json.nullable(data.title, json.string)),
-      #("type", json.string(data.type_)),
-      #("description", json.nullable(data.description, json.string))
-    ],
-  )
+  utils.object([
+    #("maximum", json.nullable(data.maximum, json.int)),
+    #("minimum", json.nullable(data.minimum, json.int)),
+    #("title", json.nullable(data.title, json.string)),
+    #("type", json.string(data.type_)),
+    #("description", json.nullable(data.description, json.string)),
+  ])
 }
 
 pub fn jsonrpcmessage_decoder() {
@@ -2553,12 +2429,10 @@ pub fn paginated_result_decoder() {
 }
 
 pub fn paginated_result_encode(data: PaginatedResult) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("nextCursor", json.nullable(data.next_cursor, json.string))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("nextCursor", json.nullable(data.next_cursor, json.string)),
+  ])
 }
 
 pub fn list_resource_templates_result_decoder() {
@@ -2576,26 +2450,22 @@ pub fn list_resource_templates_result_decoder() {
     "resourceTemplates",
     decode.list(resource_template_decoder()),
   )
-  decode.success(
-    ListResourceTemplatesResult(
-      meta: meta,
-      next_cursor: next_cursor,
-      resource_templates: resource_templates,
-    ),
-  )
+  decode.success(ListResourceTemplatesResult(
+    meta: meta,
+    next_cursor: next_cursor,
+    resource_templates: resource_templates,
+  ))
 }
 
 pub fn list_resource_templates_result_encode(data: ListResourceTemplatesResult) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("nextCursor", json.nullable(data.next_cursor, json.string)),
-      #(
-        "resourceTemplates",
-        json.array(_, resource_template_encode)(data.resource_templates),
-      )
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("nextCursor", json.nullable(data.next_cursor, json.string)),
+    #(
+      "resourceTemplates",
+      json.array(_, resource_template_encode)(data.resource_templates),
+    ),
+  ])
 }
 
 pub fn boolean_schema_decoder() {
@@ -2615,25 +2485,21 @@ pub fn boolean_schema_decoder() {
     None,
     decode.optional(decode.string),
   )
-  decode.success(
-    BooleanSchema(
-      default: default,
-      title: title,
-      type_: type_,
-      description: description,
-    ),
-  )
+  decode.success(BooleanSchema(
+    default: default,
+    title: title,
+    type_: type_,
+    description: description,
+  ))
 }
 
 pub fn boolean_schema_encode(data: BooleanSchema) {
-  utils.object(
-    [
-      #("default", json.nullable(data.default, json.bool)),
-      #("title", json.nullable(data.title, json.string)),
-      #("type", json.string(data.type_)),
-      #("description", json.nullable(data.description, json.string))
-    ],
-  )
+  utils.object([
+    #("default", json.nullable(data.default, json.bool)),
+    #("title", json.nullable(data.title, json.string)),
+    #("type", json.string(data.type_)),
+    #("description", json.nullable(data.description, json.string)),
+  ])
 }
 
 pub fn tool_list_changed_notification_decoder() {
@@ -2646,26 +2512,21 @@ pub fn tool_list_changed_notification_decoder() {
     ["_meta"],
     utils.dynamic_to_json(),
   )
-  decode.success(
-    ToolListChangedNotification(
-      meta: meta,
-      additional_properties: additional_properties,
-    ),
-  )
+  decode.success(ToolListChangedNotification(
+    meta: meta,
+    additional_properties: additional_properties,
+  ))
 }
 
 pub fn tool_list_changed_notification_encode(data: ToolListChangedNotification) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      ..dict.to_list(
-        dict.map_values(
-          data.additional_properties,
-          fn(_key, value) { fn(data) { data }(value) },
-        ),
-      )
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    ..dict.to_list(
+      dict.map_values(data.additional_properties, fn(_key, value) {
+        fn(data) { data }(value)
+      }),
+    )
+  ])
 }
 
 pub fn elicit_result_decoder() {
@@ -2684,13 +2545,11 @@ pub fn elicit_result_decoder() {
 }
 
 pub fn elicit_result_encode(data: ElicitResult) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("action", json.string(data.action)),
-      #("content", json.nullable(data.content, utils.dict(_, fn(data) { data })))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("action", json.string(data.action)),
+    #("content", json.nullable(data.content, utils.dict(_, fn(data) { data }))),
+  ])
 }
 
 pub fn client_result_decoder() {
@@ -2715,27 +2574,23 @@ pub fn create_message_result_decoder() {
   use model <- decode.field("model", decode.string)
   use role <- decode.field("role", role_decoder())
   use content <- decode.field("content", utils.dynamic_to_json())
-  decode.success(
-    CreateMessageResult(
-      meta: meta,
-      stop_reason: stop_reason,
-      model: model,
-      role: role,
-      content: content,
-    ),
-  )
+  decode.success(CreateMessageResult(
+    meta: meta,
+    stop_reason: stop_reason,
+    model: model,
+    role: role,
+    content: content,
+  ))
 }
 
 pub fn create_message_result_encode(data: CreateMessageResult) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("stopReason", json.nullable(data.stop_reason, json.string)),
-      #("model", json.string(data.model)),
-      #("role", role_encode(data.role)),
-      #("content", fn(data) { data }(data.content))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("stopReason", json.nullable(data.stop_reason, json.string)),
+    #("model", json.string(data.model)),
+    #("role", role_encode(data.role)),
+    #("content", fn(data) { data }(data.content)),
+  ])
 }
 
 pub fn resource_template_decoder() {
@@ -2766,31 +2621,27 @@ pub fn resource_template_decoder() {
     None,
     decode.optional(decode.string),
   )
-  decode.success(
-    ResourceTemplate(
-      meta: meta,
-      annotations: annotations,
-      uri_template: uri_template,
-      name: name,
-      mime_type: mime_type,
-      title: title,
-      description: description,
-    ),
-  )
+  decode.success(ResourceTemplate(
+    meta: meta,
+    annotations: annotations,
+    uri_template: uri_template,
+    name: name,
+    mime_type: mime_type,
+    title: title,
+    description: description,
+  ))
 }
 
 pub fn resource_template_encode(data: ResourceTemplate) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("annotations", json.nullable(data.annotations, annotations_encode)),
-      #("uriTemplate", json.string(data.uri_template)),
-      #("name", json.string(data.name)),
-      #("mimeType", json.nullable(data.mime_type, json.string)),
-      #("title", json.nullable(data.title, json.string)),
-      #("description", json.nullable(data.description, json.string))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("annotations", json.nullable(data.annotations, annotations_encode)),
+    #("uriTemplate", json.string(data.uri_template)),
+    #("name", json.string(data.name)),
+    #("mimeType", json.nullable(data.mime_type, json.string)),
+    #("title", json.nullable(data.title, json.string)),
+    #("description", json.nullable(data.description, json.string)),
+  ])
 }
 
 pub fn list_resources_request_decoder() {
@@ -2822,13 +2673,11 @@ pub fn resource_contents_decoder() {
 }
 
 pub fn resource_contents_encode(data: ResourceContents) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("uri", json.string(data.uri)),
-      #("mimeType", json.nullable(data.mime_type, json.string))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("uri", json.string(data.uri)),
+    #("mimeType", json.nullable(data.mime_type, json.string)),
+  ])
 }
 
 pub fn jsonrpcnotification_decoder() {
@@ -2839,19 +2688,19 @@ pub fn jsonrpcnotification_decoder() {
     decode.optional(internal_2_decoder()),
   )
   use jsonrpc <- decode.field("jsonrpc", decode.string)
-  decode.success(
-    Jsonrpcnotification(method_: method_, params: params, jsonrpc: jsonrpc),
-  )
+  decode.success(Jsonrpcnotification(
+    method_: method_,
+    params: params,
+    jsonrpc: jsonrpc,
+  ))
 }
 
 pub fn jsonrpcnotification_encode(data: Jsonrpcnotification) {
-  utils.object(
-    [
-      #("method", json.string(data.method_)),
-      #("params", json.nullable(data.params, internal_2_encode)),
-      #("jsonrpc", json.string(data.jsonrpc))
-    ],
-  )
+  utils.object([
+    #("method", json.string(data.method_)),
+    #("params", json.nullable(data.params, internal_2_encode)),
+    #("jsonrpc", json.string(data.jsonrpc)),
+  ])
 }
 
 pub fn resource_link_decoder() {
@@ -2884,35 +2733,31 @@ pub fn resource_link_decoder() {
     None,
     decode.optional(decode.string),
   )
-  decode.success(
-    ResourceLink(
-      size: size,
-      meta: meta,
-      annotations: annotations,
-      name: name,
-      uri: uri,
-      mime_type: mime_type,
-      title: title,
-      type_: type_,
-      description: description,
-    ),
-  )
+  decode.success(ResourceLink(
+    size: size,
+    meta: meta,
+    annotations: annotations,
+    name: name,
+    uri: uri,
+    mime_type: mime_type,
+    title: title,
+    type_: type_,
+    description: description,
+  ))
 }
 
 pub fn resource_link_encode(data: ResourceLink) {
-  utils.object(
-    [
-      #("size", json.nullable(data.size, json.int)),
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("annotations", json.nullable(data.annotations, annotations_encode)),
-      #("name", json.string(data.name)),
-      #("uri", json.string(data.uri)),
-      #("mimeType", json.nullable(data.mime_type, json.string)),
-      #("title", json.nullable(data.title, json.string)),
-      #("type", json.string(data.type_)),
-      #("description", json.nullable(data.description, json.string))
-    ],
-  )
+  utils.object([
+    #("size", json.nullable(data.size, json.int)),
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("annotations", json.nullable(data.annotations, annotations_encode)),
+    #("name", json.string(data.name)),
+    #("uri", json.string(data.uri)),
+    #("mimeType", json.nullable(data.mime_type, json.string)),
+    #("title", json.nullable(data.title, json.string)),
+    #("type", json.string(data.type_)),
+    #("description", json.nullable(data.description, json.string)),
+  ])
 }
 
 pub fn prompt_reference_decoder() {
@@ -2927,13 +2772,11 @@ pub fn prompt_reference_decoder() {
 }
 
 pub fn prompt_reference_encode(data: PromptReference) {
-  utils.object(
-    [
-      #("name", json.string(data.name)),
-      #("title", json.nullable(data.title, json.string)),
-      #("type", json.string(data.type_))
-    ],
-  )
+  utils.object([
+    #("name", json.string(data.name)),
+    #("title", json.nullable(data.title, json.string)),
+    #("type", json.string(data.type_)),
+  ])
 }
 
 pub fn logging_level_decoder() {
@@ -2957,20 +2800,21 @@ pub fn blob_resource_contents_decoder() {
     decode.optional(decode.string),
   )
   use blob <- decode.field("blob", decode.string)
-  decode.success(
-    BlobResourceContents(meta: meta, uri: uri, mime_type: mime_type, blob: blob),
-  )
+  decode.success(BlobResourceContents(
+    meta: meta,
+    uri: uri,
+    mime_type: mime_type,
+    blob: blob,
+  ))
 }
 
 pub fn blob_resource_contents_encode(data: BlobResourceContents) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("uri", json.string(data.uri)),
-      #("mimeType", json.nullable(data.mime_type, json.string)),
-      #("blob", json.string(data.blob))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("uri", json.string(data.uri)),
+    #("mimeType", json.nullable(data.mime_type, json.string)),
+    #("blob", json.string(data.blob)),
+  ])
 }
 
 pub fn subscribe_request_decoder() {
@@ -2998,23 +2842,19 @@ pub fn annotations_decoder() {
     None,
     decode.optional(decode.string),
   )
-  decode.success(
-    Annotations(
-      priority: priority,
-      audience: audience,
-      last_modified: last_modified,
-    ),
-  )
+  decode.success(Annotations(
+    priority: priority,
+    audience: audience,
+    last_modified: last_modified,
+  ))
 }
 
 pub fn annotations_encode(data: Annotations) {
-  utils.object(
-    [
-      #("priority", json.nullable(data.priority, json.float)),
-      #("audience", json.nullable(data.audience, json.array(_, role_encode))),
-      #("lastModified", json.nullable(data.last_modified, json.string))
-    ],
-  )
+  utils.object([
+    #("priority", json.nullable(data.priority, json.float)),
+    #("audience", json.nullable(data.audience, json.array(_, role_encode))),
+    #("lastModified", json.nullable(data.last_modified, json.string)),
+  ])
 }
 
 pub fn list_resources_result_decoder() {
@@ -3029,23 +2869,19 @@ pub fn list_resources_result_decoder() {
     None,
     decode.optional(decode.string),
   )
-  decode.success(
-    ListResourcesResult(
-      meta: meta,
-      resources: resources,
-      next_cursor: next_cursor,
-    ),
-  )
+  decode.success(ListResourcesResult(
+    meta: meta,
+    resources: resources,
+    next_cursor: next_cursor,
+  ))
 }
 
 pub fn list_resources_result_encode(data: ListResourcesResult) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("resources", json.array(_, resource_encode)(data.resources)),
-      #("nextCursor", json.nullable(data.next_cursor, json.string))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("resources", json.array(_, resource_encode)(data.resources)),
+    #("nextCursor", json.nullable(data.next_cursor, json.string)),
+  ])
 }
 
 pub fn prompt_decoder() {
@@ -3070,30 +2906,26 @@ pub fn prompt_decoder() {
     None,
     decode.optional(decode.string),
   )
-  decode.success(
-    Prompt(
-      meta: meta,
-      name: name,
-      arguments: arguments,
-      title: title,
-      description: description,
-    ),
-  )
+  decode.success(Prompt(
+    meta: meta,
+    name: name,
+    arguments: arguments,
+    title: title,
+    description: description,
+  ))
 }
 
 pub fn prompt_encode(data: Prompt) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("name", json.string(data.name)),
-      #(
-        "arguments",
-        json.nullable(data.arguments, json.array(_, prompt_argument_encode)),
-      ),
-      #("title", json.nullable(data.title, json.string)),
-      #("description", json.nullable(data.description, json.string))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("name", json.string(data.name)),
+    #(
+      "arguments",
+      json.nullable(data.arguments, json.array(_, prompt_argument_encode)),
+    ),
+    #("title", json.nullable(data.title, json.string)),
+    #("description", json.nullable(data.description, json.string)),
+  ])
 }
 
 pub fn create_message_request_decoder() {
@@ -3132,42 +2964,38 @@ pub fn create_message_request_decoder() {
     decode.optional(decode.float),
   )
   use max_tokens <- decode.field("maxTokens", decode.int)
-  decode.success(
-    CreateMessageRequest(
-      include_context: include_context,
-      messages: messages,
-      model_preferences: model_preferences,
-      metadata: metadata,
-      stop_sequences: stop_sequences,
-      system_prompt: system_prompt,
-      temperature: temperature,
-      max_tokens: max_tokens,
-    ),
-  )
+  decode.success(CreateMessageRequest(
+    include_context: include_context,
+    messages: messages,
+    model_preferences: model_preferences,
+    metadata: metadata,
+    stop_sequences: stop_sequences,
+    system_prompt: system_prompt,
+    temperature: temperature,
+    max_tokens: max_tokens,
+  ))
 }
 
 pub fn create_message_request_encode(data: CreateMessageRequest) {
-  utils.object(
-    [
-      #("includeContext", json.nullable(data.include_context, json.string)),
-      #("messages", json.array(_, sampling_message_encode)(data.messages)),
-      #(
-        "modelPreferences",
-        json.nullable(data.model_preferences, model_preferences_encode),
-      ),
-      #(
-        "metadata",
-        json.nullable(data.metadata, utils.dict(_, fn(data) { data })),
-      ),
-      #(
-        "stopSequences",
-        json.nullable(data.stop_sequences, json.array(_, json.string)),
-      ),
-      #("systemPrompt", json.nullable(data.system_prompt, json.string)),
-      #("temperature", json.nullable(data.temperature, json.float)),
-      #("maxTokens", json.int(data.max_tokens))
-    ],
-  )
+  utils.object([
+    #("includeContext", json.nullable(data.include_context, json.string)),
+    #("messages", json.array(_, sampling_message_encode)(data.messages)),
+    #(
+      "modelPreferences",
+      json.nullable(data.model_preferences, model_preferences_encode),
+    ),
+    #(
+      "metadata",
+      json.nullable(data.metadata, utils.dict(_, fn(data) { data })),
+    ),
+    #(
+      "stopSequences",
+      json.nullable(data.stop_sequences, json.array(_, json.string)),
+    ),
+    #("systemPrompt", json.nullable(data.system_prompt, json.string)),
+    #("temperature", json.nullable(data.temperature, json.float)),
+    #("maxTokens", json.int(data.max_tokens)),
+  ])
 }
 
 pub fn client_request_decoder() {
@@ -3181,18 +3009,17 @@ pub fn client_request_encode(data: ClientRequest) {
 pub fn elicit_request_decoder() {
   use message <- decode.field("message", decode.string)
   use requested_schema <- decode.field("requestedSchema", internal_1_decoder())
-  decode.success(
-    ElicitRequest(message: message, requested_schema: requested_schema),
-  )
+  decode.success(ElicitRequest(
+    message: message,
+    requested_schema: requested_schema,
+  ))
 }
 
 pub fn elicit_request_encode(data: ElicitRequest) {
-  utils.object(
-    [
-      #("message", json.string(data.message)),
-      #("requestedSchema", internal_1_encode(data.requested_schema))
-    ],
-  )
+  utils.object([
+    #("message", json.string(data.message)),
+    #("requestedSchema", internal_1_encode(data.requested_schema)),
+  ])
 }
 
 pub fn audio_content_decoder() {
@@ -3209,27 +3036,23 @@ pub fn audio_content_decoder() {
   use data <- decode.field("data", decode.string)
   use mime_type <- decode.field("mimeType", decode.string)
   use type_ <- decode.field("type", decode.string)
-  decode.success(
-    AudioContent(
-      meta: meta,
-      annotations: annotations,
-      data: data,
-      mime_type: mime_type,
-      type_: type_,
-    ),
-  )
+  decode.success(AudioContent(
+    meta: meta,
+    annotations: annotations,
+    data: data,
+    mime_type: mime_type,
+    type_: type_,
+  ))
 }
 
 pub fn audio_content_encode(data: AudioContent) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("annotations", json.nullable(data.annotations, annotations_encode)),
-      #("data", json.string(data.data)),
-      #("mimeType", json.string(data.mime_type)),
-      #("type", json.string(data.type_))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("annotations", json.nullable(data.annotations, annotations_encode)),
+    #("data", json.string(data.data)),
+    #("mimeType", json.string(data.mime_type)),
+    #("type", json.string(data.type_)),
+  ])
 }
 
 pub fn prompt_message_decoder() {
@@ -3239,12 +3062,10 @@ pub fn prompt_message_decoder() {
 }
 
 pub fn prompt_message_encode(data: PromptMessage) {
-  utils.object(
-    [
-      #("role", role_encode(data.role)),
-      #("content", content_block_encode(data.content))
-    ],
-  )
+  utils.object([
+    #("role", role_encode(data.role)),
+    #("content", content_block_encode(data.content)),
+  ])
 }
 
 pub fn resource_template_reference_decoder() {
@@ -3254,9 +3075,10 @@ pub fn resource_template_reference_decoder() {
 }
 
 pub fn resource_template_reference_encode(data: ResourceTemplateReference) {
-  utils.object(
-    [#("uri", json.string(data.uri)), #("type", json.string(data.type_))],
-  )
+  utils.object([
+    #("uri", json.string(data.uri)),
+    #("type", json.string(data.type_)),
+  ])
 }
 
 pub fn paginated_request_decoder() {
@@ -3290,27 +3112,23 @@ pub fn enum_schema_decoder() {
     None,
     decode.optional(decode.string),
   )
-  decode.success(
-    EnumSchema(
-      enum: enum,
-      enum_names: enum_names,
-      title: title,
-      type_: type_,
-      description: description,
-    ),
-  )
+  decode.success(EnumSchema(
+    enum: enum,
+    enum_names: enum_names,
+    title: title,
+    type_: type_,
+    description: description,
+  ))
 }
 
 pub fn enum_schema_encode(data: EnumSchema) {
-  utils.object(
-    [
-      #("enum", json.array(_, json.string)(data.enum)),
-      #("enumNames", json.nullable(data.enum_names, json.array(_, json.string))),
-      #("title", json.nullable(data.title, json.string)),
-      #("type", json.string(data.type_)),
-      #("description", json.nullable(data.description, json.string))
-    ],
-  )
+  utils.object([
+    #("enum", json.array(_, json.string)(data.enum)),
+    #("enumNames", json.nullable(data.enum_names, json.array(_, json.string))),
+    #("title", json.nullable(data.title, json.string)),
+    #("type", json.string(data.type_)),
+    #("description", json.nullable(data.description, json.string)),
+  ])
 }
 
 pub fn root_decoder() {
@@ -3319,19 +3137,21 @@ pub fn root_decoder() {
     None,
     decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
   )
-  use name <- decode.optional_field("name", None, decode.optional(decode.string))
+  use name <- decode.optional_field(
+    "name",
+    None,
+    decode.optional(decode.string),
+  )
   use uri <- decode.field("uri", decode.string)
   decode.success(Root(meta: meta, name: name, uri: uri))
 }
 
 pub fn root_encode(data: Root) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("name", json.nullable(data.name, json.string)),
-      #("uri", json.string(data.uri))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("name", json.nullable(data.name, json.string)),
+    #("uri", json.string(data.uri)),
+  ])
 }
 
 pub fn list_resource_templates_request_decoder() {
@@ -3343,7 +3163,9 @@ pub fn list_resource_templates_request_decoder() {
   decode.success(ListResourceTemplatesRequest(cursor: cursor))
 }
 
-pub fn list_resource_templates_request_encode(data: ListResourceTemplatesRequest) {
+pub fn list_resource_templates_request_encode(
+  data: ListResourceTemplatesRequest,
+) {
   utils.object([#("cursor", json.nullable(data.cursor, json.string))])
 }
 
@@ -3356,12 +3178,10 @@ pub fn client_capabilities_decoder() {
   use experimental <- decode.optional_field(
     "experimental",
     None,
-    decode.optional(
-      decode.dict(
-        decode.string,
-        decode.dict(decode.string, utils.dynamic_to_json()),
-      ),
-    ),
+    decode.optional(decode.dict(
+      decode.string,
+      decode.dict(decode.string, utils.dynamic_to_json()),
+    )),
   )
   use elicitation <- decode.optional_field(
     "elicitation",
@@ -3373,37 +3193,33 @@ pub fn client_capabilities_decoder() {
     None,
     decode.optional(internal_0_decoder()),
   )
-  decode.success(
-    ClientCapabilities(
-      sampling: sampling,
-      experimental: experimental,
-      elicitation: elicitation,
-      roots: roots,
-    ),
-  )
+  decode.success(ClientCapabilities(
+    sampling: sampling,
+    experimental: experimental,
+    elicitation: elicitation,
+    roots: roots,
+  ))
 }
 
 pub fn client_capabilities_encode(data: ClientCapabilities) {
-  utils.object(
-    [
-      #(
-        "sampling",
-        json.nullable(data.sampling, utils.dict(_, fn(data) { data })),
+  utils.object([
+    #(
+      "sampling",
+      json.nullable(data.sampling, utils.dict(_, fn(data) { data })),
+    ),
+    #(
+      "experimental",
+      json.nullable(
+        data.experimental,
+        utils.dict(_, utils.dict(_, fn(data) { data })),
       ),
-      #(
-        "experimental",
-        json.nullable(
-          data.experimental,
-          utils.dict(_, utils.dict(_, fn(data) { data })),
-        ),
-      ),
-      #(
-        "elicitation",
-        json.nullable(data.elicitation, utils.dict(_, fn(data) { data })),
-      ),
-      #("roots", json.nullable(data.roots, internal_0_encode))
-    ],
-  )
+    ),
+    #(
+      "elicitation",
+      json.nullable(data.elicitation, utils.dict(_, fn(data) { data })),
+    ),
+    #("roots", json.nullable(data.roots, internal_0_encode)),
+  ])
 }
 
 pub fn read_resource_result_decoder() {
@@ -3417,12 +3233,10 @@ pub fn read_resource_result_decoder() {
 }
 
 pub fn read_resource_result_encode(data: ReadResourceResult) {
-  utils.object(
-    [
-      #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-      #("contents", json.array(_, fn(data) { data })(data.contents))
-    ],
-  )
+  utils.object([
+    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("contents", json.array(_, fn(data) { data })(data.contents)),
+  ])
 }
 
 pub fn prompt_argument_decoder() {
@@ -3442,25 +3256,21 @@ pub fn prompt_argument_decoder() {
     None,
     decode.optional(decode.bool),
   )
-  decode.success(
-    PromptArgument(
-      name: name,
-      title: title,
-      description: description,
-      required: required,
-    ),
-  )
+  decode.success(PromptArgument(
+    name: name,
+    title: title,
+    description: description,
+    required: required,
+  ))
 }
 
 pub fn prompt_argument_encode(data: PromptArgument) {
-  utils.object(
-    [
-      #("name", json.string(data.name)),
-      #("title", json.nullable(data.title, json.string)),
-      #("description", json.nullable(data.description, json.string)),
-      #("required", json.nullable(data.required, json.bool))
-    ],
-  )
+  utils.object([
+    #("name", json.string(data.name)),
+    #("title", json.nullable(data.title, json.string)),
+    #("description", json.nullable(data.description, json.string)),
+    #("required", json.nullable(data.required, json.bool)),
+  ])
 }
 
 pub fn sampling_message_decoder() {
@@ -3470,12 +3280,10 @@ pub fn sampling_message_decoder() {
 }
 
 pub fn sampling_message_encode(data: SamplingMessage) {
-  utils.object(
-    [
-      #("role", role_encode(data.role)),
-      #("content", fn(data) { data }(data.content))
-    ],
-  )
+  utils.object([
+    #("role", role_encode(data.role)),
+    #("content", fn(data) { data }(data.content)),
+  ])
 }
 
 pub fn server_result_decoder() {
@@ -3497,10 +3305,8 @@ pub fn base_metadata_decoder() {
 }
 
 pub fn base_metadata_encode(data: BaseMetadata) {
-  utils.object(
-    [
-      #("name", json.string(data.name)),
-      #("title", json.nullable(data.title, json.string))
-    ],
-  )
+  utils.object([
+    #("name", json.string(data.name)),
+    #("title", json.nullable(data.title, json.string)),
+  ])
 }
