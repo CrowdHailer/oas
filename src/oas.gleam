@@ -73,7 +73,13 @@ fn ref_decoder(of: decode.Decoder(t)) -> decode.Decoder(Ref(t)) {
       use description <- optional_field("description", decode.string)
       decode.success(Ref(ref, summary, description))
     },
-    [decode.map(of, Inline)],
+    [
+      decode.map(of, Inline),
+      decode.new_primitive_decoder("any", fn(a) {
+        echo a
+        panic
+      }),
+    ],
   )
 }
 
@@ -549,7 +555,10 @@ fn type_decoder() {
           [type_] -> decode.success(#(type_, nullable_decoder()))
           ["null", type_] | [type_, "null"] ->
             decode.success(#(type_, decode.success(True)))
-          _ -> decode.failure(#("", nullable_decoder()), "Type")
+          _ -> {
+            echo types
+            decode.failure(#("", nullable_decoder()), "Type")
+          }
         }
       }),
     ],
