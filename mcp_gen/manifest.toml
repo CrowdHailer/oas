@@ -7,14 +7,16 @@ packages = [
   { name = "glance", version = "3.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib", "glexer"], otp_app = "glance", source = "hex", outer_checksum = "F3458292AFB4136CEE23142A8727C1270494E7A96978B9B9F9D2C1618583EF3D" },
   { name = "glance_printer", version = "3.0.0", build_tools = ["gleam"], requirements = ["glam", "glance", "gleam_stdlib"], otp_app = "glance_printer", source = "hex", outer_checksum = "8386C156B413B90828884577F89AADD4C131AA1C3DAFC826607BAEE40E636ACE" },
   { name = "gleam_http", version = "4.1.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_http", source = "hex", outer_checksum = "DD0271B32C356FB684EC7E9F48B1E835D0480168848581F68983C0CC371405D4" },
+  { name = "gleam_javascript", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_javascript", source = "hex", outer_checksum = "EF6C77A506F026C6FB37941889477CD5E4234FCD4337FF0E9384E297CB8F97EB" },
   { name = "gleam_json", version = "3.0.2", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_json", source = "hex", outer_checksum = "874FA3C3BB6E22DD2BB111966BD40B3759E9094E05257899A7C08F5DE77EC049" },
   { name = "gleam_stdlib", version = "0.62.0", build_tools = ["gleam"], requirements = [], otp_app = "gleam_stdlib", source = "hex", outer_checksum = "DC8872BC0B8550F6E22F0F698CFE7F1E4BDA7312FDEB40D6C3F44C5B706C8310" },
   { name = "gleeunit", version = "1.6.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleeunit", source = "hex", outer_checksum = "FDC68A8C492B1E9B429249062CD9BAC9B5538C6FBF584817205D0998C42E1DAC" },
   { name = "glexer", version = "2.2.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "glexer", source = "hex", outer_checksum = "5C235CBDF4DA5203AD5EAB1D6D8B456ED8162C5424FE2309CFFB7EF438B7C269" },
   { name = "justin", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "justin", source = "hex", outer_checksum = "7FA0C6DB78640C6DC5FBFD59BF3456009F3F8B485BF6825E97E1EB44E9A1E2CD" },
   { name = "non_empty_list", version = "2.1.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "non_empty_list", source = "hex", outer_checksum = "3BF1496B475F3F2CE2EA18157587329812493369B2A7C5B9DCFEA5C007670A3B" },
-  { name = "oas", version = "6.1.0", build_tools = ["gleam"], requirements = ["gleam_http", "gleam_json", "gleam_stdlib", "non_empty_list"], source = "local", path = ".." },
-  { name = "oas_generator", version = "1.6.3", build_tools = ["gleam"], requirements = ["glance", "glance_printer", "gleam_http", "gleam_json", "gleam_stdlib", "justin", "non_empty_list", "oas", "simplifile", "snag"], source = "local", path = "../../oas_generator" },
+  { name = "oas", version = "6.1.0", build_tools = ["gleam"], requirements = ["gleam_http", "gleam_json", "gleam_stdlib", "non_empty_list", "oas_generator_utils"], source = "local", path = ".." },
+  { name = "oas_generator", version = "2.0.0", build_tools = ["gleam"], requirements = ["glance", "glance_printer", "gleam_http", "gleam_json", "gleam_stdlib", "justin", "non_empty_list", "oas", "simplifile", "snag"], otp_app = "oas_generator", source = "hex", outer_checksum = "685BB14C6EDEDC9701A0E1E3953070764DB1F835766B35B0A53A20E7776510D6" },
+  { name = "oas_generator_utils", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_http", "gleam_javascript", "gleam_json", "gleam_stdlib"], otp_app = "oas_generator_utils", source = "hex", outer_checksum = "153BDDC65C28B4D1188B6686055C000013C24AF63C3FF301617854819C25F2CE" },
   { name = "simplifile", version = "2.3.0", build_tools = ["gleam"], requirements = ["filepath", "gleam_stdlib"], otp_app = "simplifile", source = "hex", outer_checksum = "0A868DAC6063D9E983477981839810DC2E553285AB4588B87E3E9C96A7FB4CB4" },
   { name = "snag", version = "1.1.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "snag", source = "hex", outer_checksum = "7E9F06390040EB5FAB392CE642771484136F2EC103A92AE11BA898C8167E6E17" },
 ]
@@ -24,5 +26,5 @@ gleam_json = { version = ">= 3.0.2 and < 4.0.0" }
 gleam_stdlib = { version = ">= 0.44.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
 oas = { path = ".." }
-oas_generator = { path = "../../oas_generator" }
+oas_generator = { version = ">= 2.0.0 and < 3.0.0" }
 simplifile = { version = ">= 2.3.0 and < 3.0.0" }
