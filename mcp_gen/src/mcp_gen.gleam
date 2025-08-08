@@ -14,11 +14,8 @@ pub fn main() {
       decode.success,
     )
   let assert Ok(content) = simplifile.read("./priv/2025-06-18/schema.json")
-  // TODO update oas_generator to handle a self module. 
-  // This already exists but assumes components/schemas is getting written directly to schema.gleam
 
   // TODO extract the constant value for each request type
-  let content = string.replace(content, "#/definitions", "#/components/schemas")
   let assert Ok(definitions) = json.parse(content, decoder)
   let definitions =
     dict.map_values(definitions, fn(key, value) {
@@ -28,7 +25,9 @@ pub fn main() {
       }
     })
 
-  let contents = generator.gen_schema_file(definitions, "oas/mcp")
+  let assert Ok(contents) =
+    generator.gen_schema_file(definitions)
+    |> generator.run_single_location("#/definitions/")
   let assert Ok(Nil) =
     simplifile.write("../src/oas/mcp/messages.gleam", contents)
 }

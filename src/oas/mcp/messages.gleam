@@ -3,14 +3,14 @@ import gleam/dynamic
 import gleam/dynamic/decode
 import gleam/json
 import gleam/option.{type Option, None}
-import oas/mcp/utils
+import oas/generator/utils
 
 pub type BaseMetadata {
   BaseMetadata(name: String, title: Option(String))
 }
 
 pub type SamplingMessage {
-  SamplingMessage(role: Role, content: json.Json)
+  SamplingMessage(role: Role, content: utils.Any)
 }
 
 pub type PromptArgument {
@@ -24,16 +24,16 @@ pub type PromptArgument {
 
 pub type ReadResourceResult {
   ReadResourceResult(
-    meta: Option(dict.Dict(String, json.Json)),
-    contents: List(json.Json),
+    meta: Option(dict.Dict(String, utils.Any)),
+    contents: List(utils.Any),
   )
 }
 
 pub type ClientCapabilities {
   ClientCapabilities(
-    sampling: Option(dict.Dict(String, json.Json)),
-    experimental: Option(dict.Dict(String, dict.Dict(String, json.Json))),
-    elicitation: Option(dict.Dict(String, json.Json)),
+    sampling: Option(dict.Dict(String, utils.Any)),
+    experimental: Option(dict.Dict(String, dict.Dict(String, utils.Any))),
+    elicitation: Option(dict.Dict(String, utils.Any)),
     roots: Option(Internal0),
   )
 }
@@ -44,7 +44,7 @@ pub type ListResourceTemplatesRequest {
 
 pub type Root {
   Root(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     name: Option(String),
     uri: String,
   )
@@ -74,7 +74,7 @@ pub type PromptMessage {
 
 pub type AudioContent {
   AudioContent(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     annotations: Option(Annotations),
     data: String,
     mime_type: String,
@@ -91,7 +91,7 @@ pub type CreateMessageRequest {
     include_context: Option(String),
     messages: List(SamplingMessage),
     model_preferences: Option(ModelPreferences),
-    metadata: Option(dict.Dict(String, json.Json)),
+    metadata: Option(dict.Dict(String, utils.Any)),
     stop_sequences: Option(List(String)),
     system_prompt: Option(String),
     temperature: Option(Float),
@@ -101,7 +101,7 @@ pub type CreateMessageRequest {
 
 pub type Prompt {
   Prompt(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     name: String,
     arguments: Option(List(PromptArgument)),
     title: Option(String),
@@ -111,7 +111,7 @@ pub type Prompt {
 
 pub type ListResourcesResult {
   ListResourcesResult(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     resources: List(Resource),
     next_cursor: Option(String),
   )
@@ -131,7 +131,7 @@ pub type SubscribeRequest {
 
 pub type BlobResourceContents {
   BlobResourceContents(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     uri: String,
     mime_type: Option(String),
     blob: String,
@@ -145,7 +145,7 @@ pub type PromptReference {
 pub type ResourceLink {
   ResourceLink(
     size: Option(Int),
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     annotations: Option(Annotations),
     name: String,
     uri: String,
@@ -166,7 +166,7 @@ pub type Jsonrpcnotification {
 
 pub type ResourceContents {
   ResourceContents(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     uri: String,
     mime_type: Option(String),
   )
@@ -178,7 +178,7 @@ pub type ListResourcesRequest {
 
 pub type ResourceTemplate {
   ResourceTemplate(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     annotations: Option(Annotations),
     uri_template: String,
     name: String,
@@ -190,26 +190,26 @@ pub type ResourceTemplate {
 
 pub type CreateMessageResult {
   CreateMessageResult(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     stop_reason: Option(String),
     model: String,
     role: Role,
-    content: json.Json,
+    content: utils.Any,
   )
 }
 
 pub type ElicitResult {
   ElicitResult(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     action: String,
-    content: Option(dict.Dict(String, json.Json)),
+    content: Option(dict.Dict(String, utils.Any)),
   )
 }
 
 pub type ToolListChangedNotification {
   ToolListChangedNotification(
-    meta: Option(dict.Dict(String, json.Json)),
-    additional_properties: dict.Dict(String, json.Json),
+    meta: Option(dict.Dict(String, utils.Any)),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
@@ -224,7 +224,7 @@ pub type BooleanSchema {
 
 pub type ListResourceTemplatesResult {
   ListResourceTemplatesResult(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     next_cursor: Option(String),
     resource_templates: List(ResourceTemplate),
   )
@@ -232,7 +232,7 @@ pub type ListResourceTemplatesResult {
 
 pub type PaginatedResult {
   PaginatedResult(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     next_cursor: Option(String),
   )
 }
@@ -253,8 +253,8 @@ pub type Jsonrpcerror {
 
 pub type Notification {
   Notification(
-    meta: Option(dict.Dict(String, json.Json)),
-    additional_properties: dict.Dict(String, json.Json),
+    meta: Option(dict.Dict(String, utils.Any)),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
@@ -274,7 +274,7 @@ pub type ToolAnnotations {
 
 pub type TextContent {
   TextContent(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     annotations: Option(Annotations),
     text: String,
     type_: String,
@@ -288,7 +288,7 @@ pub type SetLevelRequest {
 pub type InitializeResult {
   InitializeResult(
     protocol_version: String,
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     instructions: Option(String),
     server_info: Implementation,
     capabilities: ServerCapabilities,
@@ -298,7 +298,7 @@ pub type InitializeResult {
 pub type Resource {
   Resource(
     size: Option(Int),
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     annotations: Option(Annotations),
     name: String,
     uri: String,
@@ -310,7 +310,7 @@ pub type Resource {
 
 pub type ListPromptsResult {
   ListPromptsResult(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     next_cursor: Option(String),
     prompts: List(Prompt),
   )
@@ -328,7 +328,7 @@ pub type ModelPreferences {
 pub type Request {
   Request(
     meta: Option(Internal4),
-    additional_properties: dict.Dict(String, json.Json),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
@@ -338,13 +338,13 @@ pub type ModelHint {
 
 pub type RootsListChangedNotification {
   RootsListChangedNotification(
-    meta: Option(dict.Dict(String, json.Json)),
-    additional_properties: dict.Dict(String, json.Json),
+    meta: Option(dict.Dict(String, utils.Any)),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
 pub type ListRootsResult {
-  ListRootsResult(meta: Option(dict.Dict(String, json.Json)), roots: List(Root))
+  ListRootsResult(meta: Option(dict.Dict(String, utils.Any)), roots: List(Root))
 }
 
 pub type ListToolsRequest {
@@ -377,8 +377,8 @@ pub type Jsonrpcrequest {
 
 pub type ResourceListChangedNotification {
   ResourceListChangedNotification(
-    meta: Option(dict.Dict(String, json.Json)),
-    additional_properties: dict.Dict(String, json.Json),
+    meta: Option(dict.Dict(String, utils.Any)),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
@@ -392,8 +392,8 @@ pub type LoggingMessageNotification {
 
 pub type CallToolResult {
   CallToolResult(
-    meta: Option(dict.Dict(String, json.Json)),
-    structured_content: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
+    structured_content: Option(dict.Dict(String, utils.Any)),
     content: List(ContentBlock),
     is_error: Option(Bool),
   )
@@ -401,7 +401,7 @@ pub type CallToolResult {
 
 pub type TextResourceContents {
   TextResourceContents(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     uri: String,
     text: String,
     mime_type: Option(String),
@@ -414,7 +414,7 @@ pub type GetPromptRequest {
 
 pub type CompleteResult {
   CompleteResult(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     completion: Internal7,
   )
 }
@@ -422,14 +422,14 @@ pub type CompleteResult {
 pub type CompleteRequest {
   CompleteRequest(
     context: Option(Internal8),
-    ref: json.Json,
+    ref: utils.Any,
     argument: Internal9,
   )
 }
 
 pub type GetPromptResult {
   GetPromptResult(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     messages: List(PromptMessage),
     description: Option(String),
   )
@@ -437,9 +437,9 @@ pub type GetPromptResult {
 
 pub type EmbeddedResource {
   EmbeddedResource(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     annotations: Option(Annotations),
-    resource: json.Json,
+    resource: utils.Any,
     type_: String,
   )
 }
@@ -447,7 +447,7 @@ pub type EmbeddedResource {
 pub type Tool {
   Tool(
     output_schema: Option(Internal10),
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     annotations: Option(ToolAnnotations),
     input_schema: Internal11,
     name: String,
@@ -470,23 +470,23 @@ pub type ProgressNotification {
 }
 
 pub type CallToolRequest {
-  CallToolRequest(name: String, arguments: Option(dict.Dict(String, json.Json)))
+  CallToolRequest(name: String, arguments: Option(dict.Dict(String, utils.Any)))
 }
 
 pub type ServerCapabilities {
   ServerCapabilities(
     resources: Option(Internal12),
-    experimental: Option(dict.Dict(String, dict.Dict(String, json.Json))),
+    experimental: Option(dict.Dict(String, dict.Dict(String, utils.Any))),
     prompts: Option(Internal13),
-    completions: Option(dict.Dict(String, json.Json)),
+    completions: Option(dict.Dict(String, utils.Any)),
     tools: Option(Internal14),
-    logging: Option(dict.Dict(String, json.Json)),
+    logging: Option(dict.Dict(String, utils.Any)),
   )
 }
 
 pub type ListToolsResult {
   ListToolsResult(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     next_cursor: Option(String),
     tools: List(Tool),
   )
@@ -499,28 +499,28 @@ pub type CancelledNotification {
 pub type ListRootsRequest {
   ListRootsRequest(
     meta: Option(Internal15),
-    additional_properties: dict.Dict(String, json.Json),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
 pub type Result {
   Result(
-    meta: Option(dict.Dict(String, json.Json)),
-    additional_properties: dict.Dict(String, json.Json),
+    meta: Option(dict.Dict(String, utils.Any)),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
 pub type PingRequest {
   PingRequest(
     meta: Option(Internal16),
-    additional_properties: dict.Dict(String, json.Json),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
 pub type PromptListChangedNotification {
   PromptListChangedNotification(
-    meta: Option(dict.Dict(String, json.Json)),
-    additional_properties: dict.Dict(String, json.Json),
+    meta: Option(dict.Dict(String, utils.Any)),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
@@ -534,7 +534,7 @@ pub type UnsubscribeRequest {
 
 pub type ImageContent {
   ImageContent(
-    meta: Option(dict.Dict(String, json.Json)),
+    meta: Option(dict.Dict(String, utils.Any)),
     annotations: Option(Annotations),
     data: String,
     mime_type: String,
@@ -556,8 +556,8 @@ pub type InitializeRequest {
 
 pub type InitializedNotification {
   InitializedNotification(
-    meta: Option(dict.Dict(String, json.Json)),
-    additional_properties: dict.Dict(String, json.Json),
+    meta: Option(dict.Dict(String, utils.Any)),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
@@ -575,8 +575,8 @@ pub type Internal1 {
 
 pub type Internal2 {
   Internal2(
-    meta: Option(dict.Dict(String, json.Json)),
-    additional_properties: dict.Dict(String, json.Json),
+    meta: Option(dict.Dict(String, utils.Any)),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
@@ -587,21 +587,21 @@ pub type Internal3 {
 pub type Internal4 {
   Internal4(
     progress_token: Option(ProgressToken),
-    additional_properties: dict.Dict(String, json.Json),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
 pub type Internal5 {
   Internal5(
     progress_token: Option(ProgressToken),
-    additional_properties: dict.Dict(String, json.Json),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
 pub type Internal6 {
   Internal6(
     meta: Option(Internal5),
-    additional_properties: dict.Dict(String, json.Json),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
@@ -619,7 +619,7 @@ pub type Internal9 {
 
 pub type Internal10 {
   Internal10(
-    properties: Option(dict.Dict(String, dict.Dict(String, json.Json))),
+    properties: Option(dict.Dict(String, dict.Dict(String, utils.Any))),
     type_: String,
     required: Option(List(String)),
   )
@@ -627,7 +627,7 @@ pub type Internal10 {
 
 pub type Internal11 {
   Internal11(
-    properties: Option(dict.Dict(String, dict.Dict(String, json.Json))),
+    properties: Option(dict.Dict(String, dict.Dict(String, utils.Any))),
     type_: String,
     required: Option(List(String)),
   )
@@ -648,52 +648,52 @@ pub type Internal14 {
 pub type Internal15 {
   Internal15(
     progress_token: Option(ProgressToken),
-    additional_properties: dict.Dict(String, json.Json),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
 pub type Internal16 {
   Internal16(
     progress_token: Option(ProgressToken),
-    additional_properties: dict.Dict(String, json.Json),
+    additional_properties: dict.Dict(String, utils.Any),
   )
 }
 
 pub type ServerResult =
-  json.Json
+  utils.Any
 
 pub type ClientRequest =
-  json.Json
+  utils.Any
 
 pub type LoggingLevel =
   String
 
 pub type ClientResult =
-  json.Json
+  utils.Any
 
 pub type Jsonrpcmessage =
-  json.Json
+  utils.Any
 
 pub type EmptyResult =
   utils.Never
 
 pub type RequestId =
-  json.Json
+  utils.Any
 
 pub type ServerRequest =
-  json.Json
+  utils.Any
 
 pub type ProgressToken =
-  json.Json
+  utils.Any
 
 pub type ServerNotification =
-  json.Json
+  utils.Any
 
 pub type ContentBlock =
-  json.Json
+  utils.Any
 
 pub type ClientNotification =
-  json.Json
+  utils.Any
 
 pub type Role =
   String
@@ -702,7 +702,7 @@ pub type Cursor =
   String
 
 pub type PrimitiveSchemaDefinition =
-  json.Json
+  utils.Any
 
 pub fn internal_16_decoder() {
   use progress_token <- decode.optional_field(
@@ -712,7 +712,7 @@ pub fn internal_16_decoder() {
   )
   use additional_properties <- utils.decode_additional(
     ["progressToken"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(Internal16(
     progress_token: progress_token,
@@ -728,7 +728,7 @@ pub fn internal_16_encode(data: Internal16) {
     ),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -742,7 +742,7 @@ pub fn internal_15_decoder() {
   )
   use additional_properties <- utils.decode_additional(
     ["progressToken"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(Internal15(
     progress_token: progress_token,
@@ -758,7 +758,7 @@ pub fn internal_15_encode(data: Internal15) {
     ),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -817,7 +817,7 @@ pub fn internal_11_decoder() {
     None,
     decode.optional(decode.dict(
       decode.string,
-      decode.dict(decode.string, utils.dynamic_to_json()),
+      decode.dict(decode.string, utils.any_decoder()),
     )),
   )
   use type_ <- decode.field("type", decode.string)
@@ -839,7 +839,7 @@ pub fn internal_11_encode(data: Internal11) {
       "properties",
       json.nullable(
         data.properties,
-        utils.dict(_, utils.dict(_, fn(data) { data })),
+        utils.dict(_, utils.dict(_, utils.any_to_json)),
       ),
     ),
     #("type", json.string(data.type_)),
@@ -853,7 +853,7 @@ pub fn internal_10_decoder() {
     None,
     decode.optional(decode.dict(
       decode.string,
-      decode.dict(decode.string, utils.dynamic_to_json()),
+      decode.dict(decode.string, utils.any_decoder()),
     )),
   )
   use type_ <- decode.field("type", decode.string)
@@ -875,7 +875,7 @@ pub fn internal_10_encode(data: Internal10) {
       "properties",
       json.nullable(
         data.properties,
-        utils.dict(_, utils.dict(_, fn(data) { data })),
+        utils.dict(_, utils.dict(_, utils.any_to_json)),
       ),
     ),
     #("type", json.string(data.type_)),
@@ -938,7 +938,7 @@ pub fn internal_6_decoder() {
   )
   use additional_properties <- utils.decode_additional(
     ["_meta"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(Internal6(
     meta: meta,
@@ -951,7 +951,7 @@ pub fn internal_6_encode(data: Internal6) {
     #("_meta", json.nullable(data.meta, internal_5_encode)),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -965,7 +965,7 @@ pub fn internal_5_decoder() {
   )
   use additional_properties <- utils.decode_additional(
     ["progressToken"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(Internal5(
     progress_token: progress_token,
@@ -981,7 +981,7 @@ pub fn internal_5_encode(data: Internal5) {
     ),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -995,7 +995,7 @@ pub fn internal_4_decoder() {
   )
   use additional_properties <- utils.decode_additional(
     ["progressToken"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(Internal4(
     progress_token: progress_token,
@@ -1011,7 +1011,7 @@ pub fn internal_4_encode(data: Internal4) {
     ),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -1049,11 +1049,11 @@ pub fn internal_2_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use additional_properties <- utils.decode_additional(
     ["_meta"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(Internal2(
     meta: meta,
@@ -1063,10 +1063,10 @@ pub fn internal_2_decoder() {
 
 pub fn internal_2_encode(data: Internal2) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -1118,11 +1118,11 @@ pub fn initialized_notification_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use additional_properties <- utils.decode_additional(
     ["_meta"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(InitializedNotification(
     meta: meta,
@@ -1132,10 +1132,10 @@ pub fn initialized_notification_decoder() {
 
 pub fn initialized_notification_encode(data: InitializedNotification) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -1182,7 +1182,7 @@ pub fn image_content_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use annotations <- decode.optional_field(
     "annotations",
@@ -1203,7 +1203,7 @@ pub fn image_content_decoder() {
 
 pub fn image_content_encode(data: ImageContent) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("annotations", json.nullable(data.annotations, annotations_encode)),
     #("data", json.string(data.data)),
     #("mimeType", json.string(data.mime_type)),
@@ -1237,11 +1237,11 @@ pub fn prompt_list_changed_notification_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use additional_properties <- utils.decode_additional(
     ["_meta"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(PromptListChangedNotification(
     meta: meta,
@@ -1253,10 +1253,10 @@ pub fn prompt_list_changed_notification_encode(
   data: PromptListChangedNotification,
 ) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -1270,7 +1270,7 @@ pub fn ping_request_decoder() {
   )
   use additional_properties <- utils.decode_additional(
     ["_meta"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(PingRequest(
     meta: meta,
@@ -1283,7 +1283,7 @@ pub fn ping_request_encode(data: PingRequest) {
     #("_meta", json.nullable(data.meta, internal_16_encode)),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -1293,11 +1293,11 @@ pub fn result_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use additional_properties <- utils.decode_additional(
     ["_meta"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(Result(
     meta: meta,
@@ -1307,10 +1307,10 @@ pub fn result_decoder() {
 
 pub fn result_encode(data: Result) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -1324,7 +1324,7 @@ pub fn list_roots_request_decoder() {
   )
   use additional_properties <- utils.decode_additional(
     ["_meta"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(ListRootsRequest(
     meta: meta,
@@ -1337,7 +1337,7 @@ pub fn list_roots_request_encode(data: ListRootsRequest) {
     #("_meta", json.nullable(data.meta, internal_15_encode)),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -1361,18 +1361,18 @@ pub fn cancelled_notification_encode(data: CancelledNotification) {
 }
 
 pub fn primitive_schema_definition_decoder() {
-  utils.dynamic_to_json()
+  utils.any_decoder()
 }
 
 pub fn primitive_schema_definition_encode(data: PrimitiveSchemaDefinition) {
-  data
+  utils.any_to_json(data)
 }
 
 pub fn list_tools_result_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use next_cursor <- decode.optional_field(
     "nextCursor",
@@ -1389,7 +1389,7 @@ pub fn list_tools_result_decoder() {
 
 pub fn list_tools_result_encode(data: ListToolsResult) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("nextCursor", json.nullable(data.next_cursor, json.string)),
     #("tools", json.array(_, tool_encode)(data.tools)),
   ])
@@ -1406,7 +1406,7 @@ pub fn server_capabilities_decoder() {
     None,
     decode.optional(decode.dict(
       decode.string,
-      decode.dict(decode.string, utils.dynamic_to_json()),
+      decode.dict(decode.string, utils.any_decoder()),
     )),
   )
   use prompts <- decode.optional_field(
@@ -1417,7 +1417,7 @@ pub fn server_capabilities_decoder() {
   use completions <- decode.optional_field(
     "completions",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use tools <- decode.optional_field(
     "tools",
@@ -1427,7 +1427,7 @@ pub fn server_capabilities_decoder() {
   use logging <- decode.optional_field(
     "logging",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   decode.success(ServerCapabilities(
     resources: resources,
@@ -1446,16 +1446,16 @@ pub fn server_capabilities_encode(data: ServerCapabilities) {
       "experimental",
       json.nullable(
         data.experimental,
-        utils.dict(_, utils.dict(_, fn(data) { data })),
+        utils.dict(_, utils.dict(_, utils.any_to_json)),
       ),
     ),
     #("prompts", json.nullable(data.prompts, internal_13_encode)),
     #(
       "completions",
-      json.nullable(data.completions, utils.dict(_, fn(data) { data })),
+      json.nullable(data.completions, utils.dict(_, utils.any_to_json)),
     ),
     #("tools", json.nullable(data.tools, internal_14_encode)),
-    #("logging", json.nullable(data.logging, utils.dict(_, fn(data) { data }))),
+    #("logging", json.nullable(data.logging, utils.dict(_, utils.any_to_json))),
   ])
 }
 
@@ -1464,7 +1464,7 @@ pub fn call_tool_request_decoder() {
   use arguments <- decode.optional_field(
     "arguments",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   decode.success(CallToolRequest(name: name, arguments: arguments))
 }
@@ -1474,7 +1474,7 @@ pub fn call_tool_request_encode(data: CallToolRequest) {
     #("name", json.string(data.name)),
     #(
       "arguments",
-      json.nullable(data.arguments, utils.dict(_, fn(data) { data })),
+      json.nullable(data.arguments, utils.dict(_, utils.any_to_json)),
     ),
   ])
 }
@@ -1527,7 +1527,7 @@ pub fn tool_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use annotations <- decode.optional_field(
     "annotations",
@@ -1560,7 +1560,7 @@ pub fn tool_decoder() {
 pub fn tool_encode(data: Tool) {
   utils.object([
     #("outputSchema", json.nullable(data.output_schema, internal_10_encode)),
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("annotations", json.nullable(data.annotations, tool_annotations_encode)),
     #("inputSchema", internal_11_encode(data.input_schema)),
     #("name", json.string(data.name)),
@@ -1573,14 +1573,14 @@ pub fn embedded_resource_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use annotations <- decode.optional_field(
     "annotations",
     None,
     decode.optional(annotations_decoder()),
   )
-  use resource <- decode.field("resource", utils.dynamic_to_json())
+  use resource <- decode.field("resource", utils.any_decoder())
   use type_ <- decode.field("type", decode.string)
   decode.success(EmbeddedResource(
     meta: meta,
@@ -1592,9 +1592,9 @@ pub fn embedded_resource_decoder() {
 
 pub fn embedded_resource_encode(data: EmbeddedResource) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("annotations", json.nullable(data.annotations, annotations_encode)),
-    #("resource", fn(data) { data }(data.resource)),
+    #("resource", utils.any_to_json(data.resource)),
     #("type", json.string(data.type_)),
   ])
 }
@@ -1603,7 +1603,7 @@ pub fn get_prompt_result_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use messages <- decode.field(
     "messages",
@@ -1623,7 +1623,7 @@ pub fn get_prompt_result_decoder() {
 
 pub fn get_prompt_result_encode(data: GetPromptResult) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("messages", json.array(_, prompt_message_encode)(data.messages)),
     #("description", json.nullable(data.description, json.string)),
   ])
@@ -1643,7 +1643,7 @@ pub fn complete_request_decoder() {
     None,
     decode.optional(internal_8_decoder()),
   )
-  use ref <- decode.field("ref", utils.dynamic_to_json())
+  use ref <- decode.field("ref", utils.any_decoder())
   use argument <- decode.field("argument", internal_9_decoder())
   decode.success(CompleteRequest(context: context, ref: ref, argument: argument))
 }
@@ -1651,7 +1651,7 @@ pub fn complete_request_decoder() {
 pub fn complete_request_encode(data: CompleteRequest) {
   utils.object([
     #("context", json.nullable(data.context, internal_8_encode)),
-    #("ref", fn(data) { data }(data.ref)),
+    #("ref", utils.any_to_json(data.ref)),
     #("argument", internal_9_encode(data.argument)),
   ])
 }
@@ -1660,7 +1660,7 @@ pub fn complete_result_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use completion <- decode.field("completion", internal_7_decoder())
   decode.success(CompleteResult(meta: meta, completion: completion))
@@ -1668,7 +1668,7 @@ pub fn complete_result_decoder() {
 
 pub fn complete_result_encode(data: CompleteResult) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("completion", internal_7_encode(data.completion)),
   ])
 }
@@ -1682,11 +1682,11 @@ pub fn role_encode(data: Role) {
 }
 
 pub fn client_notification_decoder() {
-  utils.dynamic_to_json()
+  utils.any_decoder()
 }
 
 pub fn client_notification_encode(data: ClientNotification) {
-  data
+  utils.any_to_json(data)
 }
 
 pub fn get_prompt_request_decoder() {
@@ -1710,7 +1710,7 @@ pub fn text_resource_contents_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use uri <- decode.field("uri", decode.string)
   use text <- decode.field("text", decode.string)
@@ -1729,7 +1729,7 @@ pub fn text_resource_contents_decoder() {
 
 pub fn text_resource_contents_encode(data: TextResourceContents) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("uri", json.string(data.uri)),
     #("text", json.string(data.text)),
     #("mimeType", json.nullable(data.mime_type, json.string)),
@@ -1737,23 +1737,23 @@ pub fn text_resource_contents_encode(data: TextResourceContents) {
 }
 
 pub fn content_block_decoder() {
-  utils.dynamic_to_json()
+  utils.any_decoder()
 }
 
 pub fn content_block_encode(data: ContentBlock) {
-  data
+  utils.any_to_json(data)
 }
 
 pub fn call_tool_result_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use structured_content <- decode.optional_field(
     "structuredContent",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use content <- decode.field("content", decode.list(content_block_decoder()))
   use is_error <- decode.optional_field(
@@ -1771,10 +1771,10 @@ pub fn call_tool_result_decoder() {
 
 pub fn call_tool_result_encode(data: CallToolResult) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #(
       "structuredContent",
-      json.nullable(data.structured_content, utils.dict(_, fn(data) { data })),
+      json.nullable(data.structured_content, utils.dict(_, utils.any_to_json)),
     ),
     #("content", json.array(_, content_block_encode)(data.content)),
     #("isError", json.nullable(data.is_error, json.bool)),
@@ -1813,11 +1813,11 @@ pub fn resource_list_changed_notification_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use additional_properties <- utils.decode_additional(
     ["_meta"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(ResourceListChangedNotification(
     meta: meta,
@@ -1829,10 +1829,10 @@ pub fn resource_list_changed_notification_encode(
   data: ResourceListChangedNotification,
 ) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -1948,7 +1948,7 @@ pub fn list_roots_result_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use roots <- decode.field("roots", decode.list(root_decoder()))
   decode.success(ListRootsResult(meta: meta, roots: roots))
@@ -1956,7 +1956,7 @@ pub fn list_roots_result_decoder() {
 
 pub fn list_roots_result_encode(data: ListRootsResult) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("roots", json.array(_, root_encode)(data.roots)),
   ])
 }
@@ -1965,11 +1965,11 @@ pub fn roots_list_changed_notification_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use additional_properties <- utils.decode_additional(
     ["_meta"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(RootsListChangedNotification(
     meta: meta,
@@ -1981,10 +1981,10 @@ pub fn roots_list_changed_notification_encode(
   data: RootsListChangedNotification,
 ) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -2011,7 +2011,7 @@ pub fn request_decoder() {
   )
   use additional_properties <- utils.decode_additional(
     ["_meta"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(Request(
     meta: meta,
@@ -2024,7 +2024,7 @@ pub fn request_encode(data: Request) {
     #("_meta", json.nullable(data.meta, internal_4_encode)),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -2072,18 +2072,18 @@ pub fn model_preferences_encode(data: ModelPreferences) {
 }
 
 pub fn server_notification_decoder() {
-  utils.dynamic_to_json()
+  utils.any_decoder()
 }
 
 pub fn server_notification_encode(data: ServerNotification) {
-  data
+  utils.any_to_json(data)
 }
 
 pub fn list_prompts_result_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use next_cursor <- decode.optional_field(
     "nextCursor",
@@ -2100,7 +2100,7 @@ pub fn list_prompts_result_decoder() {
 
 pub fn list_prompts_result_encode(data: ListPromptsResult) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("nextCursor", json.nullable(data.next_cursor, json.string)),
     #("prompts", json.array(_, prompt_encode)(data.prompts)),
   ])
@@ -2111,7 +2111,7 @@ pub fn resource_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use annotations <- decode.optional_field(
     "annotations",
@@ -2150,7 +2150,7 @@ pub fn resource_decoder() {
 pub fn resource_encode(data: Resource) {
   utils.object([
     #("size", json.nullable(data.size, json.int)),
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("annotations", json.nullable(data.annotations, annotations_encode)),
     #("name", json.string(data.name)),
     #("uri", json.string(data.uri)),
@@ -2165,7 +2165,7 @@ pub fn initialize_result_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use instructions <- decode.optional_field(
     "instructions",
@@ -2189,7 +2189,7 @@ pub fn initialize_result_decoder() {
 pub fn initialize_result_encode(data: InitializeResult) {
   utils.object([
     #("protocolVersion", json.string(data.protocol_version)),
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("instructions", json.nullable(data.instructions, json.string)),
     #("serverInfo", implementation_encode(data.server_info)),
     #("capabilities", server_capabilities_encode(data.capabilities)),
@@ -2206,18 +2206,18 @@ pub fn set_level_request_encode(data: SetLevelRequest) {
 }
 
 pub fn progress_token_decoder() {
-  utils.dynamic_to_json()
+  utils.any_decoder()
 }
 
 pub fn progress_token_encode(data: ProgressToken) {
-  data
+  utils.any_to_json(data)
 }
 
 pub fn text_content_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use annotations <- decode.optional_field(
     "annotations",
@@ -2236,7 +2236,7 @@ pub fn text_content_decoder() {
 
 pub fn text_content_encode(data: TextContent) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("annotations", json.nullable(data.annotations, annotations_encode)),
     #("text", json.string(data.text)),
     #("type", json.string(data.type_)),
@@ -2289,11 +2289,11 @@ pub fn tool_annotations_encode(data: ToolAnnotations) {
 }
 
 pub fn server_request_decoder() {
-  utils.dynamic_to_json()
+  utils.any_decoder()
 }
 
 pub fn server_request_encode(data: ServerRequest) {
-  data
+  utils.any_to_json(data)
 }
 
 pub fn read_resource_request_decoder() {
@@ -2309,11 +2309,11 @@ pub fn notification_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use additional_properties <- utils.decode_additional(
     ["_meta"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(Notification(
     meta: meta,
@@ -2323,10 +2323,10 @@ pub fn notification_decoder() {
 
 pub fn notification_encode(data: Notification) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -2348,11 +2348,11 @@ pub fn jsonrpcerror_encode(data: Jsonrpcerror) {
 }
 
 pub fn request_id_decoder() {
-  utils.dynamic_to_json()
+  utils.any_decoder()
 }
 
 pub fn request_id_encode(data: RequestId) {
-  data
+  utils.any_to_json(data)
 }
 
 pub fn empty_result_decoder() {
@@ -2407,18 +2407,18 @@ pub fn number_schema_encode(data: NumberSchema) {
 }
 
 pub fn jsonrpcmessage_decoder() {
-  utils.dynamic_to_json()
+  utils.any_decoder()
 }
 
 pub fn jsonrpcmessage_encode(data: Jsonrpcmessage) {
-  data
+  utils.any_to_json(data)
 }
 
 pub fn paginated_result_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use next_cursor <- decode.optional_field(
     "nextCursor",
@@ -2430,7 +2430,7 @@ pub fn paginated_result_decoder() {
 
 pub fn paginated_result_encode(data: PaginatedResult) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("nextCursor", json.nullable(data.next_cursor, json.string)),
   ])
 }
@@ -2439,7 +2439,7 @@ pub fn list_resource_templates_result_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use next_cursor <- decode.optional_field(
     "nextCursor",
@@ -2459,7 +2459,7 @@ pub fn list_resource_templates_result_decoder() {
 
 pub fn list_resource_templates_result_encode(data: ListResourceTemplatesResult) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("nextCursor", json.nullable(data.next_cursor, json.string)),
     #(
       "resourceTemplates",
@@ -2506,11 +2506,11 @@ pub fn tool_list_changed_notification_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use additional_properties <- utils.decode_additional(
     ["_meta"],
-    utils.dynamic_to_json(),
+    utils.any_decoder(),
   )
   decode.success(ToolListChangedNotification(
     meta: meta,
@@ -2520,10 +2520,10 @@ pub fn tool_list_changed_notification_decoder() {
 
 pub fn tool_list_changed_notification_encode(data: ToolListChangedNotification) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     ..dict.to_list(
       dict.map_values(data.additional_properties, fn(_key, value) {
-        fn(data) { data }(value)
+        utils.any_to_json(value)
       }),
     )
   ])
@@ -2533,38 +2533,38 @@ pub fn elicit_result_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use action <- decode.field("action", decode.string)
   use content <- decode.optional_field(
     "content",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   decode.success(ElicitResult(meta: meta, action: action, content: content))
 }
 
 pub fn elicit_result_encode(data: ElicitResult) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("action", json.string(data.action)),
-    #("content", json.nullable(data.content, utils.dict(_, fn(data) { data }))),
+    #("content", json.nullable(data.content, utils.dict(_, utils.any_to_json))),
   ])
 }
 
 pub fn client_result_decoder() {
-  utils.dynamic_to_json()
+  utils.any_decoder()
 }
 
 pub fn client_result_encode(data: ClientResult) {
-  data
+  utils.any_to_json(data)
 }
 
 pub fn create_message_result_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use stop_reason <- decode.optional_field(
     "stopReason",
@@ -2573,7 +2573,7 @@ pub fn create_message_result_decoder() {
   )
   use model <- decode.field("model", decode.string)
   use role <- decode.field("role", role_decoder())
-  use content <- decode.field("content", utils.dynamic_to_json())
+  use content <- decode.field("content", utils.any_decoder())
   decode.success(CreateMessageResult(
     meta: meta,
     stop_reason: stop_reason,
@@ -2585,11 +2585,11 @@ pub fn create_message_result_decoder() {
 
 pub fn create_message_result_encode(data: CreateMessageResult) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("stopReason", json.nullable(data.stop_reason, json.string)),
     #("model", json.string(data.model)),
     #("role", role_encode(data.role)),
-    #("content", fn(data) { data }(data.content)),
+    #("content", utils.any_to_json(data.content)),
   ])
 }
 
@@ -2597,7 +2597,7 @@ pub fn resource_template_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use annotations <- decode.optional_field(
     "annotations",
@@ -2634,7 +2634,7 @@ pub fn resource_template_decoder() {
 
 pub fn resource_template_encode(data: ResourceTemplate) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("annotations", json.nullable(data.annotations, annotations_encode)),
     #("uriTemplate", json.string(data.uri_template)),
     #("name", json.string(data.name)),
@@ -2661,7 +2661,7 @@ pub fn resource_contents_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use uri <- decode.field("uri", decode.string)
   use mime_type <- decode.optional_field(
@@ -2674,7 +2674,7 @@ pub fn resource_contents_decoder() {
 
 pub fn resource_contents_encode(data: ResourceContents) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("uri", json.string(data.uri)),
     #("mimeType", json.nullable(data.mime_type, json.string)),
   ])
@@ -2708,7 +2708,7 @@ pub fn resource_link_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use annotations <- decode.optional_field(
     "annotations",
@@ -2749,7 +2749,7 @@ pub fn resource_link_decoder() {
 pub fn resource_link_encode(data: ResourceLink) {
   utils.object([
     #("size", json.nullable(data.size, json.int)),
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("annotations", json.nullable(data.annotations, annotations_encode)),
     #("name", json.string(data.name)),
     #("uri", json.string(data.uri)),
@@ -2791,7 +2791,7 @@ pub fn blob_resource_contents_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use uri <- decode.field("uri", decode.string)
   use mime_type <- decode.optional_field(
@@ -2810,7 +2810,7 @@ pub fn blob_resource_contents_decoder() {
 
 pub fn blob_resource_contents_encode(data: BlobResourceContents) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("uri", json.string(data.uri)),
     #("mimeType", json.nullable(data.mime_type, json.string)),
     #("blob", json.string(data.blob)),
@@ -2861,7 +2861,7 @@ pub fn list_resources_result_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use resources <- decode.field("resources", decode.list(resource_decoder()))
   use next_cursor <- decode.optional_field(
@@ -2878,7 +2878,7 @@ pub fn list_resources_result_decoder() {
 
 pub fn list_resources_result_encode(data: ListResourcesResult) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("resources", json.array(_, resource_encode)(data.resources)),
     #("nextCursor", json.nullable(data.next_cursor, json.string)),
   ])
@@ -2888,7 +2888,7 @@ pub fn prompt_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use name <- decode.field("name", decode.string)
   use arguments <- decode.optional_field(
@@ -2917,7 +2917,7 @@ pub fn prompt_decoder() {
 
 pub fn prompt_encode(data: Prompt) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("name", json.string(data.name)),
     #(
       "arguments",
@@ -2946,7 +2946,7 @@ pub fn create_message_request_decoder() {
   use metadata <- decode.optional_field(
     "metadata",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use stop_sequences <- decode.optional_field(
     "stopSequences",
@@ -2986,7 +2986,7 @@ pub fn create_message_request_encode(data: CreateMessageRequest) {
     ),
     #(
       "metadata",
-      json.nullable(data.metadata, utils.dict(_, fn(data) { data })),
+      json.nullable(data.metadata, utils.dict(_, utils.any_to_json)),
     ),
     #(
       "stopSequences",
@@ -2999,11 +2999,11 @@ pub fn create_message_request_encode(data: CreateMessageRequest) {
 }
 
 pub fn client_request_decoder() {
-  utils.dynamic_to_json()
+  utils.any_decoder()
 }
 
 pub fn client_request_encode(data: ClientRequest) {
-  data
+  utils.any_to_json(data)
 }
 
 pub fn elicit_request_decoder() {
@@ -3026,7 +3026,7 @@ pub fn audio_content_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use annotations <- decode.optional_field(
     "annotations",
@@ -3047,7 +3047,7 @@ pub fn audio_content_decoder() {
 
 pub fn audio_content_encode(data: AudioContent) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("annotations", json.nullable(data.annotations, annotations_encode)),
     #("data", json.string(data.data)),
     #("mimeType", json.string(data.mime_type)),
@@ -3135,7 +3135,7 @@ pub fn root_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use name <- decode.optional_field(
     "name",
@@ -3148,7 +3148,7 @@ pub fn root_decoder() {
 
 pub fn root_encode(data: Root) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
     #("name", json.nullable(data.name, json.string)),
     #("uri", json.string(data.uri)),
   ])
@@ -3173,20 +3173,20 @@ pub fn client_capabilities_decoder() {
   use sampling <- decode.optional_field(
     "sampling",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use experimental <- decode.optional_field(
     "experimental",
     None,
     decode.optional(decode.dict(
       decode.string,
-      decode.dict(decode.string, utils.dynamic_to_json()),
+      decode.dict(decode.string, utils.any_decoder()),
     )),
   )
   use elicitation <- decode.optional_field(
     "elicitation",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
   use roots <- decode.optional_field(
     "roots",
@@ -3205,18 +3205,18 @@ pub fn client_capabilities_encode(data: ClientCapabilities) {
   utils.object([
     #(
       "sampling",
-      json.nullable(data.sampling, utils.dict(_, fn(data) { data })),
+      json.nullable(data.sampling, utils.dict(_, utils.any_to_json)),
     ),
     #(
       "experimental",
       json.nullable(
         data.experimental,
-        utils.dict(_, utils.dict(_, fn(data) { data })),
+        utils.dict(_, utils.dict(_, utils.any_to_json)),
       ),
     ),
     #(
       "elicitation",
-      json.nullable(data.elicitation, utils.dict(_, fn(data) { data })),
+      json.nullable(data.elicitation, utils.dict(_, utils.any_to_json)),
     ),
     #("roots", json.nullable(data.roots, internal_0_encode)),
   ])
@@ -3226,16 +3226,16 @@ pub fn read_resource_result_decoder() {
   use meta <- decode.optional_field(
     "_meta",
     None,
-    decode.optional(decode.dict(decode.string, utils.dynamic_to_json())),
+    decode.optional(decode.dict(decode.string, utils.any_decoder())),
   )
-  use contents <- decode.field("contents", decode.list(utils.dynamic_to_json()))
+  use contents <- decode.field("contents", decode.list(utils.any_decoder()))
   decode.success(ReadResourceResult(meta: meta, contents: contents))
 }
 
 pub fn read_resource_result_encode(data: ReadResourceResult) {
   utils.object([
-    #("_meta", json.nullable(data.meta, utils.dict(_, fn(data) { data }))),
-    #("contents", json.array(_, fn(data) { data })(data.contents)),
+    #("_meta", json.nullable(data.meta, utils.dict(_, utils.any_to_json))),
+    #("contents", json.array(_, utils.any_to_json)(data.contents)),
   ])
 }
 
@@ -3275,23 +3275,23 @@ pub fn prompt_argument_encode(data: PromptArgument) {
 
 pub fn sampling_message_decoder() {
   use role <- decode.field("role", role_decoder())
-  use content <- decode.field("content", utils.dynamic_to_json())
+  use content <- decode.field("content", utils.any_decoder())
   decode.success(SamplingMessage(role: role, content: content))
 }
 
 pub fn sampling_message_encode(data: SamplingMessage) {
   utils.object([
     #("role", role_encode(data.role)),
-    #("content", fn(data) { data }(data.content)),
+    #("content", utils.any_to_json(data.content)),
   ])
 }
 
 pub fn server_result_decoder() {
-  utils.dynamic_to_json()
+  utils.any_decoder()
 }
 
 pub fn server_result_encode(data: ServerResult) {
-  data
+  utils.any_to_json(data)
 }
 
 pub fn base_metadata_decoder() {

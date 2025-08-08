@@ -14,7 +14,7 @@ packages = [
   { name = "justin", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "justin", source = "hex", outer_checksum = "7FA0C6DB78640C6DC5FBFD59BF3456009F3F8B485BF6825E97E1EB44E9A1E2CD" },
   { name = "non_empty_list", version = "2.1.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "non_empty_list", source = "hex", outer_checksum = "3BF1496B475F3F2CE2EA18157587329812493369B2A7C5B9DCFEA5C007670A3B" },
   { name = "oas", version = "6.1.0", build_tools = ["gleam"], requirements = ["gleam_http", "gleam_json", "gleam_stdlib", "non_empty_list"], source = "local", path = ".." },
-  { name = "oas_generator", version = "1.6.3", build_tools = ["gleam"], requirements = ["glance", "glance_printer", "gleam_http", "gleam_json", "gleam_stdlib", "justin", "non_empty_list", "oas", "simplifile", "snag"], otp_app = "oas_generator", source = "hex", outer_checksum = "CEFF6AC0479DF391BF1656A547E6244702C044A293F54E9139A0E2F81D4F8E25" },
+  { name = "oas_generator", version = "1.6.3", build_tools = ["gleam"], requirements = ["glance", "glance_printer", "gleam_http", "gleam_json", "gleam_stdlib", "justin", "non_empty_list", "oas", "simplifile", "snag"], source = "local", path = "../../oas_generator" },
   { name = "simplifile", version = "2.3.0", build_tools = ["gleam"], requirements = ["filepath", "gleam_stdlib"], otp_app = "simplifile", source = "hex", outer_checksum = "0A868DAC6063D9E983477981839810DC2E553285AB4588B87E3E9C96A7FB4CB4" },
   { name = "snag", version = "1.1.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "snag", source = "hex", outer_checksum = "7E9F06390040EB5FAB392CE642771484136F2EC103A92AE11BA898C8167E6E17" },
 ]
@@ -24,5 +24,5 @@ gleam_json = { version = ">= 3.0.2 and < 4.0.0" }
 gleam_stdlib = { version = ">= 0.44.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
 oas = { path = ".." }
-oas_generator = { version = ">= 1.6.3 and < 2.0.0" }
+oas_generator = { path = "../../oas_generator" }
 simplifile = { version = ">= 2.3.0 and < 3.0.0" }

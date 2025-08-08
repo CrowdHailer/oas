@@ -4,6 +4,7 @@ import gleam/list
 import gleam/option.{None, Some}
 import non_empty_list
 import oas
+import oas/generator/utils
 
 pub fn boolean() {
   oas.Boolean(
@@ -225,4 +226,162 @@ fn json_object(properties) {
     }
   })
   |> json.object
+}
+
+pub fn to_any(schema) {
+  case schema {
+    oas.Boolean(nullable:, title:, description:, deprecated:) ->
+      any_object([
+        #("type", Some(utils.String("boolean"))),
+        #("nullable", Some(utils.Boolean(nullable))),
+        #("title", option.map(title, utils.String)),
+        #("description", option.map(description, utils.String)),
+        #("deprecated", Some(utils.Boolean(deprecated))),
+      ])
+    oas.Integer(..) as int -> {
+      any_object([
+        #("type", Some(utils.String("integer"))),
+        #("multipleOf", option.map(int.multiple_of, utils.Integer)),
+        #("maximum", option.map(int.maximum, utils.Integer)),
+        #("exclusiveMaximum", option.map(int.exclusive_maximum, utils.Integer)),
+        #("minimum", option.map(int.minimum, utils.Integer)),
+        #("exclusiveMinimum", option.map(int.exclusive_minimum, utils.Integer)),
+        #("nullable", Some(utils.Boolean(int.nullable))),
+        #("title", option.map(int.title, utils.String)),
+        #("description", option.map(int.description, utils.String)),
+        #("deprecated", Some(utils.Boolean(int.deprecated))),
+      ])
+    }
+    oas.Number(..) as number -> {
+      any_object([
+        #("type", Some(utils.String("number"))),
+        #("multipleOf", option.map(number.multiple_of, utils.Integer)),
+        #("maximum", option.map(number.maximum, utils.Integer)),
+        #(
+          "exclusiveMaximum",
+          option.map(number.exclusive_maximum, utils.Integer),
+        ),
+        #("minimum", option.map(number.minimum, utils.Integer)),
+        #(
+          "exclusiveMinimum",
+          option.map(number.exclusive_minimum, utils.Integer),
+        ),
+        #("nullable", Some(utils.Boolean(number.nullable))),
+        #("title", option.map(number.title, utils.String)),
+        #("description", option.map(number.description, utils.String)),
+        #("deprecated", Some(utils.Boolean(number.deprecated))),
+      ])
+    }
+    oas.String(..) as string -> {
+      any_object([
+        #("type", Some(utils.String("string"))),
+        #("MaxLength", option.map(string.max_length, utils.Integer)),
+        #("MinLength", option.map(string.min_length, utils.Integer)),
+        #("Pattern", option.map(string.pattern, utils.String)),
+        #("Format", option.map(string.format, utils.String)),
+        #("nullable", Some(utils.Boolean(string.nullable))),
+        #("title", option.map(string.title, utils.String)),
+        #("description", option.map(string.description, utils.String)),
+        #("deprecated", Some(utils.Boolean(string.deprecated))),
+      ])
+    }
+    oas.Null(..) as null -> {
+      any_object([
+        #("type", Some(utils.String("null"))),
+        #("title", option.map(null.title, utils.String)),
+        #("description", option.map(null.description, utils.String)),
+        #("deprecated", Some(utils.Boolean(null.deprecated))),
+      ])
+    }
+    oas.Array(..) as array -> {
+      any_object([
+        #("type", Some(utils.String("array"))),
+        #("maxItems", option.map(array.max_items, utils.Integer)),
+        #("minItems", option.map(array.min_items, utils.Integer)),
+        #("uniqueItems", Some(utils.Boolean(array.unique_items))),
+        #("items", Some(ref_to_any(array.items))),
+        #("nullable", Some(utils.Boolean(array.nullable))),
+        #("title", option.map(array.title, utils.String)),
+        #("description", option.map(array.description, utils.String)),
+        #("deprecated", Some(utils.Boolean(array.deprecated))),
+      ])
+    }
+    oas.Object(..) as object -> {
+      any_object([
+        #("type", Some(utils.String("object"))),
+        #(
+          "properties",
+          Some(utils.Object(
+            object.properties |> dict.map_values(fn(_, v) { ref_to_any(v) }),
+          )),
+        ),
+        #(
+          "additionalProperties",
+          option.map(object.additional_properties, ref_to_any),
+        ),
+        #("maxProperties", option.map(object.max_properties, utils.Integer)),
+        #("minProperties", Some(utils.Integer(object.min_properties))),
+        #(
+          "required",
+          Some(utils.Array(list.map(object.required, utils.String))),
+        ),
+        #("nullable", Some(utils.Boolean(object.nullable))),
+        #("title", option.map(object.title, utils.String)),
+        #("description", option.map(object.description, utils.String)),
+        #("deprecated", Some(utils.Boolean(object.deprecated))),
+      ])
+    }
+    oas.AllOf(varients) -> {
+      any_object([
+        #(
+          "allOf",
+          Some(
+            utils.Array(list.map(non_empty_list.to_list(varients), ref_to_any)),
+          ),
+        ),
+      ])
+    }
+    oas.AnyOf(varients) -> {
+      any_object([
+        #(
+          "anyOf",
+          Some(
+            utils.Array(list.map(non_empty_list.to_list(varients), ref_to_any)),
+          ),
+        ),
+      ])
+    }
+    oas.OneOf(varients) -> {
+      any_object([
+        #(
+          "oneOf",
+          Some(
+            utils.Array(list.map(non_empty_list.to_list(varients), ref_to_any)),
+          ),
+        ),
+      ])
+    }
+    oas.AlwaysPasses -> utils.Boolean(True)
+    oas.AlwaysFails -> utils.Boolean(False)
+  }
+}
+
+fn ref_to_any(ref) {
+  case ref {
+    oas.Inline(schema) -> to_any(schema)
+    oas.Ref(reference, ..) ->
+      utils.Object(dict.from_list([#("$ref", utils.String(reference))]))
+  }
+}
+
+fn any_object(properties) {
+  list.filter_map(properties, fn(property) {
+    let #(key, value) = property
+    case value {
+      Some(value) -> Ok(#(key, value))
+      None -> Error(Nil)
+    }
+  })
+  |> dict.from_list
+  |> utils.Object
 }
