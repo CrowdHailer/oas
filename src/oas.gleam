@@ -7,6 +7,7 @@ import gleam/option.{type Option, None}
 import gleam/pair
 import non_empty_list.{type NonEmptyList, NonEmptyList}
 import oas/decodex
+import oas/generator/utils
 import oas/path_template
 
 fn default_field(key, decoder, default, k) {
@@ -525,6 +526,7 @@ pub type Schema {
   AllOf(NonEmptyList(Ref(Schema)))
   AnyOf(NonEmptyList(Ref(Schema)))
   OneOf(NonEmptyList(Ref(Schema)))
+  Enum(NonEmptyList(utils.Any))
   AlwaysPasses
   AlwaysFails
 }
@@ -556,7 +558,7 @@ fn type_decoder() {
   )
 }
 
-fn schema_decoder() {
+pub fn schema_decoder() {
   use <- decode.recursive()
   decode.one_of(
     {
@@ -742,6 +744,17 @@ fn schema_decoder() {
         non_empty_list_of_schema_decoder() |> decode.map(OneOf),
         decode.success,
       ),
+      decode.field(
+        "enum",
+        non_empty_list_of_any_decoder() |> decode.map(Enum),
+        decode.success,
+      ),
+      decode.field(
+        "const",
+        utils.any_decoder()
+          |> decode.map(fn(value) { Enum(non_empty_list.single(value)) }),
+        decode.success,
+      ),
       decode.bool
         |> decode.map(fn(b) {
           case b {
@@ -773,6 +786,14 @@ fn non_empty_list_of_string_decoder() {
   use list <- decode.then(decode.list(decode.string))
   case list {
     [] -> decode.failure(NonEmptyList("", []), "")
+    [a, ..rest] -> decode.success(NonEmptyList(a, rest))
+  }
+}
+
+fn non_empty_list_of_any_decoder() {
+  use list <- decode.then(decode.list(utils.any_decoder()))
+  case list {
+    [] -> decode.failure(NonEmptyList(utils.Null, []), "")
     [a, ..rest] -> decode.success(NonEmptyList(a, rest))
   }
 }

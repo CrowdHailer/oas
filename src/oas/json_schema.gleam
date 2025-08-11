@@ -4,6 +4,7 @@ import gleam/list
 import gleam/option.{None, Some}
 import non_empty_list
 import oas
+import oas/generator/utils
 
 pub fn boolean() {
   oas.Boolean(
@@ -203,6 +204,12 @@ pub fn encode(schema) {
           Some(json.array(non_empty_list.to_list(varients), ref_encode)),
         ),
       ])
+    }
+    oas.Enum(non_empty_list.NonEmptyList(value, [])) ->
+      json_object([#("const", Some(utils.any_to_json(value)))])
+    oas.Enum(values) -> {
+      let values = non_empty_list.to_list(values)
+      json_object([#("enum", Some(json.array(values, utils.any_to_json)))])
     }
     oas.AlwaysPasses -> json.bool(True)
     oas.AlwaysFails -> json.bool(False)
