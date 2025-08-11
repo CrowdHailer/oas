@@ -7,21 +7,8 @@ import gleam/option.{type Option, None}
 import gleam/pair
 import non_empty_list.{type NonEmptyList, NonEmptyList}
 import oas/decodex
-import oas/generator/utils
+import oas/json_schema
 import oas/path_template
-
-fn default_field(key, decoder, default, k) {
-  decode.optional_field(
-    key,
-    default,
-    decode.optional(decoder) |> decode.map(option.unwrap(_, or: default)),
-    k,
-  )
-}
-
-fn optional_field(key, decoder, k) {
-  decode.optional_field(key, None, decode.optional(decoder), k)
-}
 
 /// This is the root object of the OpenAPI document.
 pub type Document {
@@ -42,10 +29,17 @@ pub type Document {
 pub fn decoder() -> decode.Decoder(Document) {
   use openapi <- decode.field("openapi", decode.string)
   use info <- decode.field("info", info_decoder())
-  use json_schema_dialect <- optional_field("jsonSchemaDialect", decode.string)
-  use servers <- default_field("servers", decode.list(server_decoder()), [])
-  use paths <- default_field("paths", paths_decoder(), dict.new())
-  use components <- default_field(
+  use json_schema_dialect <- decodex.optional_field(
+    "jsonSchemaDialect",
+    decode.string,
+  )
+  use servers <- decodex.default_field(
+    "servers",
+    decode.list(server_decoder()),
+    [],
+  )
+  use paths <- decodex.default_field("paths", paths_decoder(), dict.new())
+  use components <- decodex.default_field(
     "components",
     components_decoder(),
     Components(dict.new(), dict.new(), dict.new(), dict.new()),
@@ -58,24 +52,6 @@ pub fn decoder() -> decode.Decoder(Document) {
     paths,
     components,
   ))
-}
-
-/// Node in the Specification that might be represented by a reference.
-pub type Ref(t) {
-  Ref(ref: String, summary: Option(String), description: Option(String))
-  Inline(value: t)
-}
-
-fn ref_decoder(of: decode.Decoder(t)) -> decode.Decoder(Ref(t)) {
-  decode.one_of(
-    {
-      use ref <- decode.field("$ref", decode.string)
-      use summary <- optional_field("summary", decode.string)
-      use description <- optional_field("description", decode.string)
-      decode.success(Ref(ref, summary, description))
-    },
-    [decode.map(of, Inline)],
-  )
 }
 
 /// The object provides metadata about the API. The metadata MAY be used by the clients if needed, and MAY be presented in editing or documentation generation tools for convenience.
@@ -93,11 +69,14 @@ pub type Info {
 
 fn info_decoder() {
   use title <- decode.field("title", decode.string)
-  use summary <- optional_field("summary", decode.string)
-  use description <- optional_field("description", decode.string)
-  use terms_of_service <- optional_field("termsOfService", decode.string)
-  use contact <- optional_field("contact", contact_decoder())
-  use license <- optional_field("license", license_decoder())
+  use summary <- decodex.optional_field("summary", decode.string)
+  use description <- decodex.optional_field("description", decode.string)
+  use terms_of_service <- decodex.optional_field(
+    "termsOfService",
+    decode.string,
+  )
+  use contact <- decodex.optional_field("contact", contact_decoder())
+  use license <- decodex.optional_field("license", license_decoder())
   use version <- decode.field("version", decode.string)
   decode.success(Info(
     title,
@@ -116,9 +95,9 @@ pub type Contact {
 }
 
 fn contact_decoder() {
-  use name <- optional_field("name", decode.string)
-  use url <- optional_field("url", decode.string)
-  use email <- optional_field("email", decode.string)
+  use name <- decodex.optional_field("name", decode.string)
+  use url <- decodex.optional_field("url", decode.string)
+  use email <- decodex.optional_field("email", decode.string)
   decode.success(Contact(name, url, email))
 }
 
@@ -129,8 +108,8 @@ pub type Licence {
 
 fn license_decoder() {
   use name <- decode.field("name", decode.string)
-  use identifier <- optional_field("identifier", decode.string)
-  use url <- optional_field("url", decode.string)
+  use identifier <- decodex.optional_field("identifier", decode.string)
+  use url <- decodex.optional_field("url", decode.string)
   decode.success(Licence(name, identifier, url))
 }
 
@@ -145,8 +124,8 @@ pub type Server {
 
 fn server_decoder() {
   use url <- decode.field("url", decode.string)
-  use description <- optional_field("description", decode.string)
-  use variables <- default_field(
+  use description <- decodex.optional_field("description", decode.string)
+  use variables <- decodex.default_field(
     "variables",
     decode.dict(decode.string, server_variable_decoder()),
     dict.new(),
@@ -164,10 +143,19 @@ pub type ServerVariable {
 }
 
 fn server_variable_decoder() {
-  use enum <- optional_field("enum", non_empty_list_of_string_decoder())
+  use enum <- decodex.optional_field("enum", non_empty_list_of_string_decoder())
   use default <- decode.field("default", decode.string)
-  use description <- optional_field("description", decode.string)
+  use description <- decodex.optional_field("description", decode.string)
   decode.success(ServerVariable(enum, default, description))
+}
+
+// Is it possible to get the zero value from a decoder
+fn non_empty_list_of_string_decoder() {
+  use list <- decode.then(decode.list(decode.string))
+  case list {
+    [] -> decode.failure(NonEmptyList("", []), "")
+    [a, ..rest] -> decode.success(NonEmptyList(a, rest))
+  }
 }
 
 /// Describes the operations available on a single path.
@@ -175,7 +163,7 @@ pub type PathItem {
   PathItem(
     summary: Option(String),
     description: Option(String),
-    parameters: List(Ref(Parameter)),
+    parameters: List(json_schema.Ref(Parameter)),
     operations: List(#(http.Method, Operation)),
   )
 }
@@ -185,42 +173,42 @@ fn paths_decoder() {
 }
 
 fn path_decoder() {
-  use summary <- optional_field("summary", decode.string)
-  use description <- optional_field("description", decode.string)
-  use parameters <- default_field(
+  use summary <- decodex.optional_field("summary", decode.string)
+  use description <- decodex.optional_field("description", decode.string)
+  use parameters <- decodex.default_field(
     "parameters",
-    decode.list(ref_decoder(parameter_decoder())),
+    decode.list(json_schema.ref_decoder(parameter_decoder())),
     [],
   )
-  use get <- optional_field(
+  use get <- decodex.optional_field(
     "get",
     operation_decoder() |> decode.map(pair.new(http.Get, _)),
   )
-  use put <- optional_field(
+  use put <- decodex.optional_field(
     "put",
     operation_decoder() |> decode.map(pair.new(http.Put, _)),
   )
-  use post <- optional_field(
+  use post <- decodex.optional_field(
     "post",
     operation_decoder() |> decode.map(pair.new(http.Post, _)),
   )
-  use delete <- optional_field(
+  use delete <- decodex.optional_field(
     "delete",
     operation_decoder() |> decode.map(pair.new(http.Delete, _)),
   )
-  use options <- optional_field(
+  use options <- decodex.optional_field(
     "options",
     operation_decoder() |> decode.map(pair.new(http.Options, _)),
   )
-  use head <- optional_field(
+  use head <- decodex.optional_field(
     "head",
     operation_decoder() |> decode.map(pair.new(http.Head, _)),
   )
-  use patch <- optional_field(
+  use patch <- decodex.optional_field(
     "patch",
     operation_decoder() |> decode.map(pair.new(http.Patch, _)),
   )
-  use trace <- optional_field(
+  use trace <- decodex.optional_field(
     "trace",
     operation_decoder() |> decode.map(pair.new(http.Trace, _)),
   )
@@ -237,33 +225,33 @@ fn path_decoder() {
 /// All objects defined within the components object will have no effect on the API unless they are explicitly referenced from properties outside the components object.
 pub type Components {
   Components(
-    schemas: Dict(String, Schema),
-    responses: Dict(String, Ref(Response)),
-    parameters: Dict(String, Ref(Parameter)),
-    request_bodies: Dict(String, Ref(RequestBody)),
+    schemas: Dict(String, json_schema.Schema),
+    responses: Dict(String, json_schema.Ref(Response)),
+    parameters: Dict(String, json_schema.Ref(Parameter)),
+    request_bodies: Dict(String, json_schema.Ref(RequestBody)),
   )
 }
 
 @internal
 pub fn components_decoder() {
-  use schemas <- default_field(
+  use schemas <- decodex.default_field(
     "schemas",
-    decode.dict(decode.string, schema_decoder()),
+    decode.dict(decode.string, json_schema.decoder()),
     dict.new(),
   )
-  use responses <- default_field(
+  use responses <- decodex.default_field(
     "responses",
-    decode.dict(decode.string, ref_decoder(response_decoder())),
+    decode.dict(decode.string, json_schema.ref_decoder(response_decoder())),
     dict.new(),
   )
-  use parameters <- default_field(
+  use parameters <- decodex.default_field(
     "parameters",
-    decode.dict(decode.string, ref_decoder(parameter_decoder())),
+    decode.dict(decode.string, json_schema.ref_decoder(parameter_decoder())),
     dict.new(),
   )
-  use request_bodies <- default_field(
+  use request_bodies <- decodex.default_field(
     "requestBodies",
-    decode.dict(decode.string, ref_decoder(request_body_decoder())),
+    decode.dict(decode.string, json_schema.ref_decoder(request_body_decoder())),
     dict.new(),
   )
   decode.success(Components(schemas, responses, parameters, request_bodies))
@@ -279,20 +267,20 @@ pub type Parameter {
     name: String,
     description: Option(String),
     required: Bool,
-    schema: Ref(Schema),
+    schema: json_schema.Ref(json_schema.Schema),
   )
-  PathParameter(name: String, schema: Ref(Schema))
+  PathParameter(name: String, schema: json_schema.Ref(json_schema.Schema))
   HeaderParameter(
     name: String,
     description: Option(String),
     required: Bool,
-    schema: Ref(Schema),
+    schema: json_schema.Ref(json_schema.Schema),
   )
   CookieParameter(
     name: String,
     description: Option(String),
     required: Bool,
-    schema: Ref(Schema),
+    schema: json_schema.Ref(json_schema.Schema),
   )
 }
 
@@ -301,34 +289,49 @@ fn parameter_decoder() {
   case in {
     "query" -> {
       use name <- decode.field("name", decode.string)
-      use description <- optional_field("description", decode.string)
-      use required <- default_field("required", decode.bool, False)
-      use schema <- decode.field("schema", ref_decoder(schema_decoder()))
+      use description <- decodex.optional_field("description", decode.string)
+      use required <- decodex.default_field("required", decode.bool, False)
+      use schema <- decode.field(
+        "schema",
+        json_schema.ref_decoder(json_schema.decoder()),
+      )
       decode.success(QueryParameter(name, description, required, schema))
     }
     "header" -> {
       use name <- decode.field("name", decode.string)
-      use description <- optional_field("description", decode.string)
-      use required <- default_field("required", decode.bool, False)
-      use schema <- decode.field("schema", ref_decoder(schema_decoder()))
+      use description <- decodex.optional_field("description", decode.string)
+      use required <- decodex.default_field("required", decode.bool, False)
+      use schema <- decode.field(
+        "schema",
+        json_schema.ref_decoder(json_schema.decoder()),
+      )
       decode.success(HeaderParameter(name, description, required, schema))
     }
     "path" -> {
       use name <- decode.field("name", decode.string)
-      use schema <- decode.field("schema", ref_decoder(schema_decoder()))
+      use schema <- decode.field(
+        "schema",
+        json_schema.ref_decoder(json_schema.decoder()),
+      )
       decode.success(PathParameter(name, schema))
     }
 
     "cookie" -> {
       use name <- decode.field("name", decode.string)
-      use description <- optional_field("description", decode.string)
-      use required <- default_field("required", decode.bool, False)
-      use schema <- decode.field("schema", ref_decoder(schema_decoder()))
+      use description <- decodex.optional_field("description", decode.string)
+      use required <- decodex.default_field("required", decode.bool, False)
+      use schema <- decode.field(
+        "schema",
+        json_schema.ref_decoder(json_schema.decoder()),
+      )
       decode.success(CookieParameter(name, description, required, schema))
     }
     _ ->
       decode.failure(
-        PathParameter("", Inline(Null(None, None, False))),
+        PathParameter(
+          "",
+          json_schema.Inline(json_schema.Null(None, None, False)),
+        ),
         "expected valid \"in\" field",
       )
   }
@@ -341,29 +344,29 @@ pub type Operation {
     summary: Option(String),
     description: Option(String),
     operation_id: String,
-    parameters: List(Ref(Parameter)),
-    request_body: Option(Ref(RequestBody)),
-    responses: Dict(Status, Ref(Response)),
+    parameters: List(json_schema.Ref(Parameter)),
+    request_body: Option(json_schema.Ref(RequestBody)),
+    responses: Dict(Status, json_schema.Ref(Response)),
   )
 }
 
 fn operation_decoder() {
-  use tags <- default_field("tags", decode.list(decode.string), [])
-  use summary <- optional_field("summary", decode.string)
-  use description <- optional_field("description", decode.string)
+  use tags <- decodex.default_field("tags", decode.list(decode.string), [])
+  use summary <- decodex.optional_field("summary", decode.string)
+  use description <- decodex.optional_field("description", decode.string)
   use operation_id <- decode.field("operationId", decode.string)
-  use parameters <- default_field(
+  use parameters <- decodex.default_field(
     "parameters",
-    decode.list(ref_decoder(parameter_decoder())),
+    decode.list(json_schema.ref_decoder(parameter_decoder())),
     [],
   )
-  use request_body <- optional_field(
+  use request_body <- decodex.optional_field(
     "requestBody",
-    ref_decoder(request_body_decoder()),
+    json_schema.ref_decoder(request_body_decoder()),
   )
   use responses <- decode.field(
     "responses",
-    decode.dict(status_decoder(), ref_decoder(response_decoder())),
+    decode.dict(status_decoder(), json_schema.ref_decoder(response_decoder())),
   )
   decode.success(Operation(
     tags,
@@ -386,9 +389,9 @@ pub type RequestBody {
 }
 
 fn request_body_decoder() {
-  use description <- optional_field("description", decode.string)
+  use description <- decodex.optional_field("description", decode.string)
   use content <- decode.field("content", content_decoder())
-  use required <- default_field("required", decode.bool, False)
+  use required <- decodex.default_field("required", decode.bool, False)
   decode.success(RequestBody(description, content, required))
 }
 
@@ -419,403 +422,48 @@ fn status_decoder() {
 pub type Response {
   Response(
     description: Option(String),
-    headers: Dict(String, Ref(Header)),
+    headers: Dict(String, json_schema.Ref(Header)),
     content: Dict(String, MediaType),
   )
 }
 
 fn response_decoder() {
-  use description <- optional_field("description", decode.string)
-  use headers <- default_field(
+  use description <- decodex.optional_field("description", decode.string)
+  use headers <- decodex.default_field(
     "headers",
-    decode.dict(decode.string, ref_decoder(header_decoder())),
+    decode.dict(decode.string, json_schema.ref_decoder(header_decoder())),
     dict.new(),
   )
-  use content <- default_field("content", content_decoder(), dict.new())
+  use content <- decodex.default_field("content", content_decoder(), dict.new())
   decode.success(Response(description, headers, content))
 }
 
 pub type Header {
-  Header(description: Option(String), required: Bool, schema: Schema)
+  Header(
+    description: Option(String),
+    required: Bool,
+    schema: json_schema.Schema,
+  )
 }
 
 fn header_decoder() {
-  use description <- optional_field("description", decode.string)
-  use required <- default_field("required", decode.bool, False)
-  use schema <- decode.field("schema", schema_decoder())
+  use description <- decodex.optional_field("description", decode.string)
+  use required <- decodex.default_field("required", decode.bool, False)
+  use schema <- decode.field("schema", json_schema.decoder())
   decode.success(Header(description, required, schema))
 }
 
 /// Each Media Type Object provides schema and examples for the media type identified by its key.
 pub type MediaType {
-  MediaType(schema: Option(Ref(Schema)))
+  MediaType(schema: Option(json_schema.Ref(json_schema.Schema)))
 }
 
 fn media_type_decoder() {
-  use schema <- optional_field("schema", ref_decoder(schema_decoder()))
+  use schema <- decodex.optional_field(
+    "schema",
+    json_schema.ref_decoder(json_schema.decoder()),
+  )
   decode.success(MediaType(schema))
-}
-
-/// Represents a decoded JSON schema.
-/// 
-/// Chosen to add metadata inline as it doesn't belong on ref object
-/// https://json-schema.org/draft/2020-12/json-schema-validation#name-a-vocabulary-for-basic-meta
-pub type Schema {
-  Boolean(
-    nullable: Bool,
-    title: Option(String),
-    description: Option(String),
-    deprecated: Bool,
-  )
-  Integer(
-    multiple_of: Option(Int),
-    maximum: Option(Int),
-    exclusive_maximum: Option(Int),
-    minimum: Option(Int),
-    exclusive_minimum: Option(Int),
-    nullable: Bool,
-    title: Option(String),
-    description: Option(String),
-    deprecated: Bool,
-  )
-  Number(
-    multiple_of: Option(Int),
-    maximum: Option(Int),
-    exclusive_maximum: Option(Int),
-    minimum: Option(Int),
-    exclusive_minimum: Option(Int),
-    nullable: Bool,
-    title: Option(String),
-    description: Option(String),
-    deprecated: Bool,
-  )
-  String(
-    max_length: Option(Int),
-    min_length: Option(Int),
-    pattern: Option(String),
-    // There is an enum of accepted formats but it is extended by OAS spec.
-    format: Option(String),
-    nullable: Bool,
-    title: Option(String),
-    description: Option(String),
-    deprecated: Bool,
-  )
-  Null(title: Option(String), description: Option(String), deprecated: Bool)
-  Array(
-    max_items: Option(Int),
-    min_items: Option(Int),
-    unique_items: Bool,
-    items: Ref(Schema),
-    nullable: Bool,
-    title: Option(String),
-    description: Option(String),
-    deprecated: Bool,
-  )
-  Object(
-    properties: Dict(String, Ref(Schema)),
-    required: List(String),
-    additional_properties: Option(Ref(Schema)),
-    max_properties: Option(Int),
-    // "Omitting this keyword has the same behavior as a value of 0"
-    min_properties: Int,
-    nullable: Bool,
-    title: Option(String),
-    description: Option(String),
-    deprecated: Bool,
-  )
-  AllOf(NonEmptyList(Ref(Schema)))
-  AnyOf(NonEmptyList(Ref(Schema)))
-  OneOf(NonEmptyList(Ref(Schema)))
-  Enum(NonEmptyList(utils.Any))
-  AlwaysPasses
-  AlwaysFails
-}
-
-fn properties_decoder() {
-  default_field(
-    "properties",
-    decode.dict(decode.string, ref_decoder(schema_decoder())),
-    dict.new(),
-    decode.success,
-  )
-}
-
-fn type_decoder() {
-  decode.one_of(
-    decode.string
-      |> decode.map(fn(type_) { #(type_, nullable_decoder()) }),
-    [
-      decode.list(decode.string)
-      |> decode.then(fn(types) {
-        case types {
-          [type_] -> decode.success(#(type_, nullable_decoder()))
-          ["null", type_] | [type_, "null"] ->
-            decode.success(#(type_, decode.success(True)))
-          _ -> decode.failure(#("", nullable_decoder()), "Type")
-        }
-      }),
-    ],
-  )
-}
-
-pub fn schema_decoder() {
-  use <- decode.recursive()
-  decode.one_of(
-    {
-      use #(type_, nullable_decoder) <- decodex.discriminate(
-        "type",
-        type_decoder(),
-        Null(None, None, False),
-      )
-      case type_ {
-        "boolean" ->
-          {
-            use nullable <- decode.then(nullable_decoder)
-            use title <- decode.then(title_decoder())
-            use description <- decode.then(description_decoder())
-            use deprecated <- decode.then(deprecated_decoder())
-            decode.success(Boolean(nullable, title, description, deprecated))
-          }
-          |> Ok
-        "integer" ->
-          {
-            use multiple_of <- optional_field("multipleOf", decode.int)
-            use maximum <- optional_field("maximum", decode.int)
-            use exclusive_maximum <- optional_field(
-              "exclusiveMaximum",
-              decode.int,
-            )
-            use minimum <- optional_field("minimum", decode.int)
-            use exclusive_minimum <- optional_field(
-              "exclusiveMinimum",
-              decode.int,
-            )
-            use nullable <- decode.then(nullable_decoder)
-            use title <- decode.then(title_decoder())
-            use description <- decode.then(description_decoder())
-            use deprecated <- decode.then(deprecated_decoder())
-            decode.success(Integer(
-              multiple_of,
-              maximum,
-              exclusive_maximum,
-              minimum,
-              exclusive_minimum,
-              nullable,
-              title,
-              description,
-              deprecated,
-            ))
-          }
-          |> Ok
-        "number" ->
-          {
-            use multiple_of <- optional_field("multipleOf", decode.int)
-            use maximum <- optional_field("maximum", decode.int)
-            use exclusive_maximum <- optional_field(
-              "exclusiveMaximum",
-              decode.int,
-            )
-            use minimum <- optional_field("minimum", decode.int)
-            use exclusive_minimum <- optional_field(
-              "exclusiveMinimum",
-              decode.int,
-            )
-            use nullable <- decode.then(nullable_decoder)
-            use title <- decode.then(title_decoder())
-            use description <- decode.then(description_decoder())
-            use deprecated <- decode.then(deprecated_decoder())
-            decode.success(Number(
-              multiple_of,
-              maximum,
-              exclusive_maximum,
-              minimum,
-              exclusive_minimum,
-              nullable,
-              title,
-              description,
-              deprecated,
-            ))
-          }
-          |> Ok
-
-        "string" ->
-          {
-            use max_length <- optional_field("maxLength", decode.int)
-            use min_length <- optional_field("minLength", decode.int)
-            use pattern <- optional_field("pattern", decode.string)
-            use format <- optional_field("format", decode.string)
-            use nullable <- decode.then(nullable_decoder)
-            use title <- decode.then(title_decoder())
-            use description <- decode.then(description_decoder())
-            use deprecated <- decode.then(deprecated_decoder())
-            decode.success(String(
-              max_length,
-              min_length,
-              pattern,
-              format,
-              nullable,
-              title,
-              description,
-              deprecated,
-            ))
-          }
-          |> Ok
-
-        "null" ->
-          {
-            use title <- decode.then(title_decoder())
-            use description <- decode.then(description_decoder())
-            use deprecated <- decode.then(deprecated_decoder())
-            decode.success(Null(title, description, deprecated))
-          }
-          |> Ok
-        "array" ->
-          {
-            {
-              use max_items <- optional_field("maxItems", decode.int)
-              use min_items <- optional_field("minItems", decode.int)
-              use unique_items <- default_field(
-                "uniqueItems",
-                decode.bool,
-                False,
-              )
-              use items <- decode.field("items", ref_decoder(schema_decoder()))
-              use nullable <- decode.then(nullable_decoder)
-              use title <- decode.then(title_decoder())
-              use description <- decode.then(description_decoder())
-              use deprecated <- decode.then(deprecated_decoder())
-              decode.success(Array(
-                max_items,
-                min_items,
-                unique_items,
-                items,
-                nullable,
-                title,
-                description,
-                deprecated,
-              ))
-            }
-          }
-          |> Ok
-        "object" ->
-          {
-            use properties <- decode.then(properties_decoder())
-            use required <- decode.then(required_decoder())
-            use additional_properties <- optional_field(
-              "additionalProperties",
-              ref_decoder(schema_decoder()),
-            )
-            use max_properties <- optional_field("maxProperties", decode.int)
-            // "Omitting this keyword has the same behavior as a value of 0"
-            use min_properties <- default_field("minProperties", decode.int, 0)
-            use nullable <- decode.then(nullable_decoder)
-            use title <- decode.then(title_decoder())
-            use description <- decode.then(description_decoder())
-            use deprecated <- decode.then(deprecated_decoder())
-            decode.success(Object(
-              properties,
-              required,
-              additional_properties,
-              max_properties,
-              min_properties,
-              nullable,
-              title,
-              description,
-              deprecated,
-            ))
-          }
-          |> Ok
-        type_ -> Error("valid schema type got: " <> type_)
-      }
-    },
-    [
-      decode.field(
-        "allOf",
-        non_empty_list_of_schema_decoder() |> decode.map(AllOf),
-        decode.success,
-      ),
-      decode.field(
-        "anyOf",
-        non_empty_list_of_schema_decoder() |> decode.map(AnyOf),
-        decode.success,
-      ),
-      decode.field(
-        "oneOf",
-        non_empty_list_of_schema_decoder() |> decode.map(OneOf),
-        decode.success,
-      ),
-      decode.field(
-        "enum",
-        non_empty_list_of_any_decoder() |> decode.map(Enum),
-        decode.success,
-      ),
-      decode.field(
-        "const",
-        utils.any_decoder()
-          |> decode.map(fn(value) { Enum(non_empty_list.single(value)) }),
-        decode.success,
-      ),
-      decode.bool
-        |> decode.map(fn(b) {
-          case b {
-            True -> AlwaysPasses
-            False -> AlwaysFails
-          }
-        }),
-      decode.dict(decode.string, decode.string)
-        |> decode.map(fn(d) {
-          case d == dict.new() {
-            True -> AlwaysPasses
-            False -> AlwaysFails
-          }
-        }),
-    ],
-  )
-}
-
-fn non_empty_list_of_schema_decoder() {
-  use list <- decode.then(decode.list(ref_decoder(schema_decoder())))
-  case list {
-    [] -> decode.failure(NonEmptyList(Inline(AlwaysFails), []), "")
-    [a, ..rest] -> decode.success(NonEmptyList(a, rest))
-  }
-}
-
-// Is it possible to get the zero value from a decoder
-fn non_empty_list_of_string_decoder() {
-  use list <- decode.then(decode.list(decode.string))
-  case list {
-    [] -> decode.failure(NonEmptyList("", []), "")
-    [a, ..rest] -> decode.success(NonEmptyList(a, rest))
-  }
-}
-
-fn non_empty_list_of_any_decoder() {
-  use list <- decode.then(decode.list(utils.any_decoder()))
-  case list {
-    [] -> decode.failure(NonEmptyList(utils.Null, []), "")
-    [a, ..rest] -> decode.success(NonEmptyList(a, rest))
-  }
-}
-
-fn required_decoder() {
-  default_field("required", decode.list(decode.string), [], decode.success)
-}
-
-fn nullable_decoder() {
-  default_field("nullable", decode.bool, False, decode.success)
-}
-
-fn title_decoder() {
-  optional_field("title", decode.string, decode.success)
-}
-
-fn description_decoder() {
-  optional_field("description", decode.string, decode.success)
-}
-
-fn deprecated_decoder() {
-  default_field("deprecated", decode.bool, False, decode.success)
 }
 
 // --------------------------------------------------------------------
@@ -823,7 +471,7 @@ fn deprecated_decoder() {
 
 pub type Segment {
   FixedSegment(content: String)
-  MatchSegment(name: String, schema: Schema)
+  MatchSegment(name: String, schema: json_schema.Schema)
 }
 
 fn get_parameter(parameters, key) {
@@ -868,44 +516,45 @@ pub fn gather_match(pattern, parameters, components: Components) {
 
 pub fn fetch_schema(ref, schemas) {
   case ref {
-    Inline(schema) -> schema
-    Ref(ref: "#/components/schemas/" <> name, ..) -> {
+    json_schema.Inline(schema) -> schema
+    json_schema.Ref(ref: "#/components/schemas/" <> name, ..) -> {
       let assert Ok(schema) = dict.get(schemas, name)
       schema
     }
-    Ref(ref: ref, ..) -> panic as { "not a valid ref" <> ref }
+    json_schema.Ref(ref: ref, ..) -> panic as { "not a valid ref" <> ref }
   }
 }
 
 pub fn fetch_parameter(ref, parameters) {
   case ref {
-    Inline(parameter) -> parameter
-    Ref(ref: "#/components/parameters/" <> name, ..) -> {
-      let assert Ok(Inline(parameter)) = dict.get(parameters, name)
+    json_schema.Inline(parameter) -> parameter
+    json_schema.Ref(ref: "#/components/parameters/" <> name, ..) -> {
+      let assert Ok(json_schema.Inline(parameter)) = dict.get(parameters, name)
       parameter
     }
-    Ref(ref: ref, ..) -> panic as { "not a valid ref" <> ref }
+    json_schema.Ref(ref: ref, ..) -> panic as { "not a valid ref" <> ref }
   }
 }
 
 pub fn fetch_request_body(ref, request_bodies) {
   case ref {
-    Inline(request_body) -> request_body
-    Ref(ref: "#/components/requestBodies/" <> name, ..) -> {
-      let assert Ok(Inline(request_body)) = dict.get(request_bodies, name)
+    json_schema.Inline(request_body) -> request_body
+    json_schema.Ref(ref: "#/components/requestBodies/" <> name, ..) -> {
+      let assert Ok(json_schema.Inline(request_body)) =
+        dict.get(request_bodies, name)
       request_body
     }
-    Ref(ref: ref, ..) -> panic as { "not a valid ref" <> ref }
+    json_schema.Ref(ref: ref, ..) -> panic as { "not a valid ref" <> ref }
   }
 }
 
 pub fn fetch_response(ref, responses) {
   case ref {
-    Inline(response) -> response
-    Ref(ref: "#/components/responses/" <> name, ..) -> {
-      let assert Ok(Inline(response)) = dict.get(responses, name)
+    json_schema.Inline(response) -> response
+    json_schema.Ref(ref: "#/components/responses/" <> name, ..) -> {
+      let assert Ok(json_schema.Inline(response)) = dict.get(responses, name)
       response
     }
-    Ref(ref: ref, ..) -> panic as { "not a valid ref" <> ref }
+    json_schema.Ref(ref: ref, ..) -> panic as { "not a valid ref" <> ref }
   }
 }

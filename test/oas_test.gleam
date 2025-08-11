@@ -6,6 +6,7 @@ import gleam/result
 import gleeunit
 import gleeunit/should
 import oas
+import oas/json_schema
 
 pub fn main() {
   gleeunit.main()
@@ -150,7 +151,10 @@ pub fn array_with_null_test() {
   |> should.be_ok
   |> should.equal(oas.Components(
     dict.from_list([
-      #("thing", oas.String(None, None, None, None, True, None, None, False)),
+      #(
+        "thing",
+        json_schema.String(None, None, None, None, True, None, None, False),
+      ),
     ]),
     dict.new(),
     dict.new(),
@@ -170,7 +174,7 @@ pub fn allway_passes_test() {
   |> decode_components
   |> should.be_ok
   |> should.equal(oas.Components(
-    dict.from_list([#("thing", oas.AlwaysPasses)]),
+    dict.from_list([#("thing", json_schema.AlwaysPasses)]),
     dict.new(),
     dict.new(),
     dict.new(),

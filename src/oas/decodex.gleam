@@ -1,4 +1,18 @@
 import gleam/dynamic/decode.{type Decoder}
+import gleam/option.{None}
+
+pub fn default_field(key, decoder, default, k) {
+  decode.optional_field(
+    key,
+    default,
+    decode.optional(decoder) |> decode.map(option.unwrap(_, or: default)),
+    k,
+  )
+}
+
+pub fn optional_field(key, decoder, k) {
+  decode.optional_field(key, None, decode.optional(decoder), k)
+}
 
 pub fn discriminate(
   field: name,
