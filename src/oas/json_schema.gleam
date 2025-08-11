@@ -81,6 +81,10 @@ pub fn object(properties) {
   )
 }
 
+pub fn enum_of_strings(strings) {
+  oas.Enum(non_empty_list.map(strings, utils.String))
+}
+
 pub fn field(key, schema) {
   #(key, oas.Inline(schema), True)
 }
