@@ -435,6 +435,23 @@ pub fn string() {
   )
 }
 
+pub fn null() {
+  Null(title: None, description: None, deprecated: False)
+}
+
+pub fn array(items) {
+  Array(
+    max_items: None,
+    min_items: None,
+    unique_items: False,
+    items:,
+    nullable: False,
+    title: None,
+    description: None,
+    deprecated: False,
+  )
+}
+
 pub fn object(properties) {
   let #(properties, required) =
     list.fold(properties, #(dict.new(), []), fn(acc, property) {
