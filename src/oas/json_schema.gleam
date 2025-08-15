@@ -633,3 +633,177 @@ fn json_object(properties) {
   })
   |> json.object
 }
+
+pub fn to_fields(schema) {
+  case schema {
+    Boolean(nullable:, title:, description:, deprecated:) ->
+      any_object([
+        #("type", Some(utils.String("boolean"))),
+        #("nullable", Some(utils.Boolean(nullable))),
+        #("title", option.map(title, utils.String)),
+        #("description", option.map(description, utils.String)),
+        #("deprecated", Some(utils.Boolean(deprecated))),
+      ])
+    Integer(..) as int -> {
+      any_object([
+        #("type", Some(utils.String("integer"))),
+        #("multipleOf", option.map(int.multiple_of, utils.Integer)),
+        #("maximum", option.map(int.maximum, utils.Integer)),
+        #("exclusiveMaximum", option.map(int.exclusive_maximum, utils.Integer)),
+        #("minimum", option.map(int.minimum, utils.Integer)),
+        #("exclusiveMinimum", option.map(int.exclusive_minimum, utils.Integer)),
+        #("nullable", Some(utils.Boolean(int.nullable))),
+        #("title", option.map(int.title, utils.String)),
+        #("description", option.map(int.description, utils.String)),
+        #("deprecated", Some(utils.Boolean(int.deprecated))),
+      ])
+    }
+    Number(..) as number -> {
+      any_object([
+        #("type", Some(utils.String("number"))),
+        #("multipleOf", option.map(number.multiple_of, utils.Integer)),
+        #("maximum", option.map(number.maximum, utils.Integer)),
+        #(
+          "exclusiveMaximum",
+          option.map(number.exclusive_maximum, utils.Integer),
+        ),
+        #("minimum", option.map(number.minimum, utils.Integer)),
+        #(
+          "exclusiveMinimum",
+          option.map(number.exclusive_minimum, utils.Integer),
+        ),
+        #("nullable", Some(utils.Boolean(number.nullable))),
+        #("title", option.map(number.title, utils.String)),
+        #("description", option.map(number.description, utils.String)),
+        #("deprecated", Some(utils.Boolean(number.deprecated))),
+      ])
+    }
+    String(..) as string -> {
+      any_object([
+        #("type", Some(utils.String("string"))),
+        #("MaxLength", option.map(string.max_length, utils.Integer)),
+        #("MinLength", option.map(string.min_length, utils.Integer)),
+        #("Pattern", option.map(string.pattern, utils.String)),
+        #("Format", option.map(string.format, utils.String)),
+        #("nullable", Some(utils.Boolean(string.nullable))),
+        #("title", option.map(string.title, utils.String)),
+        #("description", option.map(string.description, utils.String)),
+        #("deprecated", Some(utils.Boolean(string.deprecated))),
+      ])
+    }
+    Null(..) as null -> {
+      any_object([
+        #("type", Some(utils.String("null"))),
+        #("title", option.map(null.title, utils.String)),
+        #("description", option.map(null.description, utils.String)),
+        #("deprecated", Some(utils.Boolean(null.deprecated))),
+      ])
+    }
+    Array(..) as array -> {
+      any_object([
+        #("type", Some(utils.String("array"))),
+        #("maxItems", option.map(array.max_items, utils.Integer)),
+        #("minItems", option.map(array.min_items, utils.Integer)),
+        #("uniqueItems", Some(utils.Boolean(array.unique_items))),
+        #("items", Some(ref_to_fields(array.items))),
+        #("nullable", Some(utils.Boolean(array.nullable))),
+        #("title", option.map(array.title, utils.String)),
+        #("description", option.map(array.description, utils.String)),
+        #("deprecated", Some(utils.Boolean(array.deprecated))),
+      ])
+    }
+    Object(..) as object -> {
+      any_object([
+        #("type", Some(utils.String("object"))),
+        #(
+          "properties",
+          Some(utils.Object(
+            object.properties |> dict.map_values(fn(_, v) { ref_to_fields(v) }),
+          )),
+        ),
+        #(
+          "additionalProperties",
+          option.map(object.additional_properties, ref_to_fields),
+        ),
+        #("maxProperties", option.map(object.max_properties, utils.Integer)),
+        #("minProperties", Some(utils.Integer(object.min_properties))),
+        #(
+          "required",
+          Some(utils.Array(list.map(object.required, utils.String))),
+        ),
+        #("nullable", Some(utils.Boolean(object.nullable))),
+        #("title", option.map(object.title, utils.String)),
+        #("description", option.map(object.description, utils.String)),
+        #("deprecated", Some(utils.Boolean(object.deprecated))),
+      ])
+    }
+    AllOf(varients) -> {
+      any_object([
+        #(
+          "allOf",
+          Some(
+            utils.Array(list.map(
+              non_empty_list.to_list(varients),
+              ref_to_fields,
+            )),
+          ),
+        ),
+      ])
+    }
+    AnyOf(varients) -> {
+      any_object([
+        #(
+          "anyOf",
+          Some(
+            utils.Array(list.map(
+              non_empty_list.to_list(varients),
+              ref_to_fields,
+            )),
+          ),
+        ),
+      ])
+    }
+    OneOf(varients) -> {
+      any_object([
+        #(
+          "oneOf",
+          Some(
+            utils.Array(list.map(
+              non_empty_list.to_list(varients),
+              ref_to_fields,
+            )),
+          ),
+        ),
+      ])
+    }
+    Enum(non_empty_list.NonEmptyList(value, [])) ->
+      any_object([#("const", Some(value))])
+    Enum(values) -> {
+      let values = non_empty_list.to_list(values)
+      any_object([#("enum", Some(utils.Array(values)))])
+    }
+    AlwaysPasses ->
+      // These can't be turned to fields
+      panic as "utils.Boolean(True)"
+    AlwaysFails -> panic as "utils.Boolean(False)"
+  }
+}
+
+fn ref_to_fields(ref) {
+  case ref {
+    Inline(schema) -> to_fields(schema) |> utils.Object
+    Ref(reference, ..) ->
+      utils.Object(dict.from_list([#("$ref", utils.String(reference))]))
+  }
+}
+
+fn any_object(properties) {
+  list.filter_map(properties, fn(property) {
+    let #(key, value) = property
+    case value {
+      Some(value) -> Ok(#(key, value))
+      None -> Error(Nil)
+    }
+  })
+  |> dict.from_list
+}
