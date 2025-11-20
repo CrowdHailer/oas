@@ -1,5 +1,5 @@
 name = "oas"
-version = "7.2.0"
+version = "7.3.0"
 target = "javascript"
 description = "Work with Open API Specs (previously swagger) and JSON Schema"
 licences = ["Apache-2.0"]

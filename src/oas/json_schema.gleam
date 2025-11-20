@@ -452,6 +452,7 @@ pub fn array(items) {
   )
 }
 
+/// Create a schema for an object with all properties defined.
 pub fn object(properties) {
   let #(properties, required) =
     list.fold(properties, #(dict.new(), []), fn(acc, property) {
@@ -474,6 +475,21 @@ pub fn object(properties) {
     title: None,
     description: None,
     deprecated: False,
+  )
+}
+
+/// Create a schema for an open dictionary of string to the given decoder type
+pub fn dict(field_decoder) {
+  Object(
+    properties: dict.new(),
+    required: [],
+    additional_properties: Some(Inline(field_decoder)),
+    deprecated: False,
+    max_properties: None,
+    min_properties: 0,
+    nullable: False,
+    title: None,
+    description: None,
   )
 }
 
