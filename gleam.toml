@@ -1,5 +1,5 @@
 name = "oas"
-version = "7.3.0"
+version = "8.0.0"
 target = "javascript"
 description = "Work with Open API Specs (previously swagger) and JSON Schema"
 licences = ["Apache-2.0"]
@@ -12,6 +12,7 @@ gleam_http = ">= 3.7.0 and < 5.0.0"
 gleam_json = ">= 3.0.0 and < 4.0.0"
 non_empty_list = ">= 2.1.0 and < 3.0.0"
 oas_generator_utils = ">= 1.0.0 and < 2.0.0"
+castor = ">= 1.0.0 and < 2.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"

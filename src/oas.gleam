@@ -1,3 +1,5 @@
+import castor as json_schema
+import castor/decodex
 import gleam/dict.{type Dict}
 import gleam/dynamic/decode
 import gleam/http
@@ -6,8 +8,6 @@ import gleam/list
 import gleam/option.{type Option, None}
 import gleam/pair
 import non_empty_list.{type NonEmptyList, NonEmptyList}
-import oas/decodex
-import oas/json_schema
 import oas/path_template
 
 /// This is the root object of the OpenAPI document.
