@@ -22,7 +22,7 @@ pub type Document {
     components: Components,
     // security:
     // tags:
-    // externalDocs:
+    external_docs: Option(ExternalDocumentation),
   )
 }
 
@@ -44,6 +44,10 @@ pub fn decoder() -> decode.Decoder(Document) {
     components_decoder(),
     Components(dict.new(), dict.new(), dict.new(), dict.new()),
   )
+  use external_docs <- decodex.optional_field(
+    "externalDocs",
+    external_docs_decoder(),
+  )
   decode.success(Document(
     openapi,
     info,
@@ -51,6 +55,7 @@ pub fn decoder() -> decode.Decoder(Document) {
     servers,
     paths,
     components,
+    external_docs,
   ))
 }
 
@@ -347,6 +352,7 @@ pub type Operation {
     parameters: List(json_schema.Ref(Parameter)),
     request_body: Option(json_schema.Ref(RequestBody)),
     responses: Dict(Status, json_schema.Ref(Response)),
+    external_docs: Option(ExternalDocumentation),
   )
 }
 
@@ -368,6 +374,10 @@ fn operation_decoder() {
     "responses",
     decode.dict(status_decoder(), json_schema.ref_decoder(response_decoder())),
   )
+  use external_docs <- decodex.optional_field(
+    "externalDocs",
+    external_docs_decoder(),
+  )
   decode.success(Operation(
     tags,
     summary,
@@ -376,6 +386,7 @@ fn operation_decoder() {
     parameters,
     request_body,
     responses,
+    external_docs,
   ))
 }
 
@@ -557,4 +568,14 @@ pub fn fetch_response(ref, responses) {
     }
     json_schema.Ref(ref: ref, ..) -> panic as { "not a valid ref" <> ref }
   }
+}
+
+pub type ExternalDocumentation {
+  ExternalDocumentation(url: String, description: Option(String))
+}
+
+fn external_docs_decoder() -> decode.Decoder(ExternalDocumentation) {
+  use url <- decode.field("url", decode.string)
+  use description <- decodex.optional_field("description", decode.string)
+  decode.success(ExternalDocumentation(url:, description:))
 }
